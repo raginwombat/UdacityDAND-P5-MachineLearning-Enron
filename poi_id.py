@@ -13,6 +13,10 @@ from sklearn.cross_validation  import train_test_split
 from sklearn.linear_model import LinearRegression
 import numpy as np
 from outlier_cleaner import outlierCleaner
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+from parse_out_email_text import parseOutText
 #Dump out 
 
 
@@ -129,10 +133,9 @@ with open("final_project_dataset.pkl", "r") as data_file:
 			predictions = reg.predict(target_train)
 			#print predictions
 			cleaned_training_data[target] = outlierCleaner(predictions, my_data['salary'], my_data[target] , .1)
-
-	print len()
+			print len(cleaned_training_data[target])
 			
-	matplotlib.pyplot.scatter( my_data['salary'], cleaned_training_data['deferred_income'])
+	#matplotlib.pyplot.scatter( my_data['salary'], cleaned_training_data['deferred_income'])
 	matplotlib.pyplot.title("cleaned")
 	matplotlib.pyplot.xlabel("salary")
 	matplotlib.pyplot.ylabel("deferred_income")
@@ -141,11 +144,11 @@ with open("final_project_dataset.pkl", "r") as data_file:
 
 
 ### Task 3: Create new feature(s)
+
+#new feature will be % of messages to POI and From POI
+
 ### Store to my_dataset for easy export below.
 my_dataset = data_dict
-#check  email sfor starwars vebiage
-#text_learning/vectorize_text.py
-
 
 ### Extract features and labels from dataset for local testing
 data = featureFormat(my_dataset, features_list, sort_keys = True)
@@ -179,3 +182,10 @@ features_train, features_test, labels_train, labels_test = \
 ### generates the necessary .pkl files for validating your results.
 
 dump_classifier_and_data(clf, my_dataset, features_list)
+
+
+'''
+Cite:
+https://www.wordnik.com/lists/star-wars-words
+
+'''
