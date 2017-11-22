@@ -13,10 +13,8 @@ from sklearn.cross_validation  import train_test_split
 from sklearn.linear_model import LinearRegression
 import numpy as np
 from outlier_cleaner import outlierCleaner
-
-from sklearn.feature_extraction.text import TfidfVectorizer
-
-from parse_out_email_text import parseOutText
+import operator
+from collections import OrderedDict
 #Dump out 
 
 
@@ -68,18 +66,7 @@ with open("final_project_dataset.pkl", "r") as data_file:
 	for key in  features_list:
 		if key != 'poi':
 			my_data[key] = [0 if per[1][key]=='NaN' else per[1][key] for per in data_dict.items()]		
-	'''			
-	my_data['salary'] = [0 if per[1]['salary']=='NaN' else per[1]['salary'] for per in data_dict.items()]
-	my_data['total_payments'] =  [0 if per[1]['total_payments']=='NaN' else per[1]['total_payments'] for per in data_dict.items()]
-	my_data['loan_advances'] = [0 if per[1]['loan_advances'] =='NaN' else per[1]['loan_advances'] for per in data_dict.items()]
-	my_data['bonus'] = [0 if per[1]['bonus']=='NaN' else per[1]['bonus'] for per in data_dict.items()]
-	my_data['restricted_stock_deferred'] = [0 if per[1]['restricted_stock_deferred']=='NaN' else per[1]['restricted_stock_deferred'] for per in data_dict.items()]
-	my_data['deferred_income'] = [0 if per[1]['deferred_income']== 'NaN' else per[1]['deferred_income'] for per in data_dict.items()]
-	my_data['from_poi_to_this_person'] = [0 if per[1]['from_poi_to_this_person']== 'NaN' else per[1]['from_poi_to_this_person'] for per in data_dict.items()]
-	my_data['exercised_stock_options'] = [0 if per[1]['exercised_stock_options']== 'NaN' else per[1]['exercised_stock_options'] for per in data_dict.items()]
-	my_data['long_term_incentive'] = [0 if per[1]['long_term_incentive']== 'NaN' else per[1]['long_term_incentive'] for per in data_dict.items()]
-	my_data['from_this_person_to_poi'] = [0 if per[1]['from_this_person_to_poi'] == 'NaN' else per[1]['from_this_person_to_poi'] for per in data_dict.items()]
-	'''
+	
 	#Test plot of some data	
 	matplotlib.pyplot.scatter( my_data['salary'], my_data['deferred_income'])
 	matplotlib.pyplot.xlabel("salary")
@@ -96,7 +83,7 @@ with open("final_project_dataset.pkl", "r") as data_file:
 	matplotlib.pyplot.title("orig")
 	matplotlib.pyplot.xlabel("salary")
 	matplotlib.pyplot.ylabel("total_payments")
-	matplotlib.pyplot.show()
+	#matplotlib.pyplot.show()
 
 
 
@@ -111,6 +98,7 @@ with open("final_project_dataset.pkl", "r") as data_file:
 	#crunch regression for all of the data against salary
 	print "Regression crunching held against salary"
 	cleaned_training_data={} #stage dict for cleaned data, using loop for regression crunch is faster than breakind out
+	feature_scores ={}
 	for target in my_data.iterkeys():
 		if target != 'label_name' and target != 'salary':
 			print "Reg for: "+target
@@ -119,33 +107,33 @@ with open("final_project_dataset.pkl", "r") as data_file:
 			reg = LinearRegression()
 			reg.fit(salary_train, target_train)
 			
-			print reg.coef_
-			print reg.intercept_
-			print reg.score(salary_test, target_test)
+			#store feature data so we can  pull out the best performing
+			#feature_scores[target] ={'coef': reg.coef, 'intercept': reg.intercept, 'score':reg.score(salary_test, target_test) }
+			feature_scores[target] =reg.score(salary_test, target_test) 
 
-			''' Score for orignal data
-					[[ 8.42670548]]
-					[ 240059.64086453]
-					0.843966936344
-					[Finished in 0.5s]
-			'''
 			#write out cleaned data for checking
 			predictions = reg.predict(target_train)
 			#print predictions
 			cleaned_training_data[target] = outlierCleaner(predictions, my_data['salary'], my_data[target] , .1)
-			print len(cleaned_training_data[target])
+			#print len(cleaned_training_data[target])
 			
 	#matplotlib.pyplot.scatter( my_data['salary'], cleaned_training_data['deferred_income'])
 	matplotlib.pyplot.title("cleaned")
 	matplotlib.pyplot.xlabel("salary")
 	matplotlib.pyplot.ylabel("deferred_income")
-	matplotlib.pyplot.show()	
-
+	#matplotlib.pyplot.show()	
+	#store features by score rank
+	feature_scores = OrderedDict(sorted(feature_scores.items(), key=operator.itemgetter(1)))
+	#print top 3 features 
+	#print feature_scores.items()[:3]
 
 
 ### Task 3: Create new feature(s)
 
 #new feature will be % of messages to POI and From POI
+
+from_poi/from_messages
+to_poi/to_messages
 
 ### Store to my_dataset for easy export below.
 my_dataset = data_dict
