@@ -15,45 +15,19 @@ import numpy as np
 from outlier_cleaner import outlierCleaner
 import operator
 from collections import OrderedDict
-#Dump out 
+
 
 
 
 ### Task 1: Select what features you'll use.
 ### features_list is a list of strings, each of which is a feature name.
 ### The first feature must be "poi".
-features_list = ['poi','salary', 'total_payments', 'loan_advances', 'bonus',
-	'restricted_stock_deferred', 'deferred_income', 'from_poi_to_this_person', 
-	'exercised_stock_options', 'long_term_incentive', 'from_this_person_to_poi' ] # You will need to use more features
+features_list = ['poi', 'salary', 'total_payments', 'bonus', 'restricted_stock_deferred',  'from_poi_frac', 'to_poi_frac',
+	'exercised_stock_options', 'long_term_incentive' ] # You will need to use more features
 
 ### Load the dictionary containing the dataset
 with open("final_project_dataset.pkl", "r") as data_file:
 	data_dict = pickle.load(data_file)
-	''' All data avail 
-	print data_dict[data_dict.keys()[0]]
-		{'salary': 365788,
-		'to_messages': 807,
-		'deferral_payments': 'NaN',
-		'total_payments': 1061827,
-		'exercised_stock_options': 'NaN',
-		'bonus': 600000,
-		'restricted_stock': 585062,
-		'shared_receipt_with_poi': 702,
-		'restricted_stock_deferred': 'NaN',
-		'total_stock_value': 585062,
-		'expenses': 94299,
-		'loan_advances': 'NaN',
-		'from_messages': 29,
-		'other': 1740,
-		'from_this_person_to_poi': 1,
-		'poi': False,
-		'director_fees': 'NaN',
-		'deferred_income': 'NaN',
-		'long_term_incentive': 'NaN',
-		'email_address': 'mark.metts@enron.com',
-		'from_poi_to_this_person': 38}
-		'''
-	
 
 ### Task 2: Remove outliers
 #plot outliers
@@ -61,86 +35,43 @@ with open("final_project_dataset.pkl", "r") as data_file:
 #build data dict
 
 	my_data={}
+	my_data['name'] = [per[0] for per in data_dict.items()]
 
-	my_data['label_name'] = [per[0] for per in data_dict.items()]
-	for key in  features_list:
-		if key != 'poi':
-			my_data[key] = [0 if per[1][key]=='NaN' else per[1][key] for per in data_dict.items()]		
+	for key in  data_dict[data_dict.keys()[0]].keys():
+		my_data[key] = [0 if per[1][key]=='NaN' else per[1][key] for per in data_dict.items()]		
 	
-	#Test plot of some data	
-	matplotlib.pyplot.scatter( my_data['salary'], my_data['deferred_income'])
-	matplotlib.pyplot.xlabel("salary")
-	matplotlib.pyplot.ylabel("deferred_income")
-	#matplotlib.pyplot.show()
-
-	for i,rs in enumerate(my_data['restricted_stock_deferred'] ):
-		if rs<0:
-			#print i
-			#print 'person: '+ label_name[i]
-			break
 	
-	matplotlib.pyplot.scatter( my_data['salary'], my_data['total_payments'])
-	matplotlib.pyplot.title("orig")
-	matplotlib.pyplot.xlabel("salary")
-	matplotlib.pyplot.ylabel("total_payments")
-	#matplotlib.pyplot.show()
-
-
-
-#Salary seems like a pretty straight forward and stable metric to use. we'll use it as the predictive key for the  rest of the features
-	#check regression for salary
-	print "Outlier Testing:"
-	#first convert data to the correct numpyarray for linear regression aalysis
-	for key in my_data.iterkeys():
-		if key != 'label_name':
-			my_data[key] = np.reshape( np.array(my_data[key]).astype(np.int), (len(my_data[key]), 1))
-
-	#crunch regression for all of the data against salary
-	print "Regression crunching held against salary"
-	cleaned_training_data={} #stage dict for cleaned data, using loop for regression crunch is faster than breakind out
-	feature_scores ={}
-	for target in my_data.iterkeys():
-		if target != 'label_name' and target != 'salary':
-			print "Reg for: "+target
-
-			salary_train, salary_test, target_train, target_test = train_test_split(my_data['salary'], my_data[target] , test_size=0.5, random_state=42)
-			reg = LinearRegression()
-			reg.fit(salary_train, target_train)
-			
-			#store feature data so we can  pull out the best performing
-			#feature_scores[target] ={'coef': reg.coef, 'intercept': reg.intercept, 'score':reg.score(salary_test, target_test) }
-			feature_scores[target] =reg.score(salary_test, target_test) 
-
-			#write out cleaned data for checking
-			predictions = reg.predict(target_train)
-			#print predictions
-			cleaned_training_data[target] = outlierCleaner(predictions, my_data['salary'], my_data[target] , .1)
-			#print len(cleaned_training_data[target])
-			
-	#matplotlib.pyplot.scatter( my_data['salary'], cleaned_training_data['deferred_income'])
-	matplotlib.pyplot.title("cleaned")
-	matplotlib.pyplot.xlabel("salary")
-	matplotlib.pyplot.ylabel("deferred_income")
-	#matplotlib.pyplot.show()	
-	#store features by score rank
-	feature_scores = OrderedDict(sorted(feature_scores.items(), key=operator.itemgetter(1)))
-	#print top 3 features 
-	#print feature_scores.items()[:3]
-
-
 ### Task 3: Create new feature(s)
-
 #new feature will be % of messages to POI and From POI
+#Using list comprehension to avoid having to initailize array  of proper length for new term
+my_data['from_poi_frac'] = [0 if my_data['from_messages'][i] ==0  else (float(my_data['from_poi_to_this_person'][i]) / float(my_data['from_messages'][i])) for i in range(0, len(my_data['to_messages'])-1)]
+my_data['to_poi_frac'] = [0 if my_data['to_messages'][i]==0 else (float(my_data['from_this_person_to_poi'][i])/ float(my_data['to_messages'][i]))  for i in range(0, len(my_data['to_messages'])-1)]
 
-from_poi/from_messages
-to_poi/to_messages
 
 ### Store to my_dataset for easy export below.
-my_dataset = data_dict
+my_dataset = my_data
 
 ### Extract features and labels from dataset for local testing
-data = featureFormat(my_dataset, features_list, sort_keys = True)
+
+
+'''due to the previous converstion of dict -> array  I can skip feature format func, 
+ I still need to  convert my data to numpy arrays and make data[0]=poi for comapitlity later
+reduce data set to only the ones in the freature list and set data[0] = poi for compatiblity'''
+	
+data = [np.reshape( np.array(my_data['poi']).astype(np.int), (len(my_data['poi']), 1))]
+
+#extract only features in list
+for key in features_list:
+	if key!='poi':
+		data.append( np.reshape( np.array(my_data[key]).astype(np.int), (len(my_data[key]), 1)))
+data = np.array(data)
+
+
+
 labels, features = targetFeatureSplit(data)
+#print labels
+#print my_data['poi']
+#print features
 
 ### Task 4: Try a varity of classifiers
 ### Please name your classifier clf for easy export below.
@@ -148,9 +79,13 @@ labels, features = targetFeatureSplit(data)
 ### you'll need to use Pipelines. For more info:
 ### http://scikit-learn.org/stable/modules/pipeline.html
 
+features_train, features_test, labels_train, labels_test = cross_validation.train_test_split(word_data, authors, test_size=0.1, random_state=42)
+
 # Provided to give you a starting point. Try a variety of classifiers.
 from sklearn.naive_bayes import GaussianNB
 clf = GaussianNB()
+clf.fit(features, labels)
+
 
 ### Task 5: Tune your classifier to achieve better than .3 precision and recall 
 ### using our testing script. Check the tester.py script in the final project
