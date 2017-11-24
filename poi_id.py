@@ -137,9 +137,11 @@ for clf_key in clfs['classifier'].iterkeys():
 	clfs['result'][clf_key]=score
 
 print "Max classifier:"
-print max(clfs['result'].iteritems(), key=operator.itemgetter(1))[0]
+max_classifier_key = max(clfs['result'].iteritems(), key=operator.itemgetter(1))[0]
+print max_classifier_key
+print type(clfs['classifier'][max_classifier_key])
 
-	#test_classifier(clfs['classifier'][clf_key], dataset, feature_list, folds = 1000)
+#test_classifier(clfs['classifier'][max_classifier_key], data, features_list, folds = 1000)
 ### Task 5: Tune your classifier to achieve better than .3 precision and recall 
 ### using our testing script. Check the tester.py script in the final project
 ### folder for details on the evaluation method, especially the test_classifier
@@ -151,6 +153,16 @@ print max(clfs['result'].iteritems(), key=operator.itemgetter(1))[0]
 #from sklearn.cross_validation import train_test_split
 features_train, features_test, labels_train, labels_test = \
 	train_test_split(features, labels, test_size=0.3, random_state=42)
+
+
+params={ 'kernel': ('linear', 'poly', 'rbf', 'sigmoid', 'precomputed'), 'C':range(1,20000, 1000)	}
+
+#clf= SVC(C= 10065 , gamma = 'auto', kernel='rbf')	
+clf = GridSearchCV(SVC(), param_grid=params, scoring='f1', cv=10)
+t0 = time()
+clf.fit(features_train, labels_train)
+print 'Grid search took: ', round(time()-t0, 3), 's'
+print clf.best_params_
 
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
 ### check your results. You do not need to change anything below, but make sure
