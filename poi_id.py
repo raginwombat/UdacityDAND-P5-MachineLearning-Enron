@@ -2,8 +2,6 @@
 
 import sys
 import pickle
-sys.path.append("../tools/")
-
 from feature_format import featureFormat, targetFeatureSplit
 from tester import dump_classifier_and_data, test_classifier
 
@@ -19,8 +17,9 @@ from time import time
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.grid_search import GridSearchCV
-
 from sklearn.svm import SVC
+from sklearn import preprocessing
+
 
 
 ### Task 1: Select what features you'll use.
@@ -46,7 +45,7 @@ with open("final_project_dataset.pkl", "r") as data_file:
 	#identify outliers and remove them by forcing to 0. can't pop them without screwin up the index:
 	for key in my_data.iterkeys():
 		cutoff = int(round(len(my_data[key]) *.05))
-		print  "removing top ", cutoff,"outliers for ", key
+		#print  "removing top ", cutoff,"outliers for ", key
 		if key!='poi':
 			for v in  sorted(my_data[key], reverse=True)[:cutoff]:
 				#print my_data[key].index(v)
@@ -109,16 +108,10 @@ features_train, features_test, labels_train, labels_test = \
 #create dict for diff classifiers
 clfs = {'classifier':{}, 'result':{}, 'params':{}}
 clfs['classifier']['Niaeve Bayes'] = GaussianNB()
-clfs['classifier']['Ada Boost'] = AdaBoostClassifier(n_estimators =13, learning_rate =1)
-clfs['classifier']['Decision Tree'] = DecisionTreeClassifier(criterion='entropy',min_samples_split=40)
-clfs['classifier']['SVC'] = SVC(C= 10065 , gamma = 'auto', kernel='rbf')
+clfs['classifier']['Decision Tree'] = DecisionTreeClassifier()
+clfs['classifier']['SVC'] = SVC()
 max_score = 0.0
-'''
 
-clfs['params']['Niaeve Bayes'] = {}
-clfs['params']['Ada Boost'] = 
-clfs['params']['Decision Tree'] = 
-'''
 for clf_key in clfs['classifier'].iterkeys():
 	t0 = time()
 	clfs['classifier'][clf_key].fit(features_train, labels_train)
@@ -139,9 +132,12 @@ for clf_key in clfs['classifier'].iterkeys():
 print "Max classifier:"
 max_classifier_key = max(clfs['result'].iteritems(), key=operator.itemgetter(1))[0]
 print max_classifier_key
-print type(clfs['classifier'][max_classifier_key])
+clf = clfs['classifier'][max_classifier_key]
 
-#test_classifier(clfs['classifier'][max_classifier_key], data, features_list, folds = 1000)
+
+test_classifier(clf, features, labels, 1000)
+
+test_classifier(clfs['classifier']['Decision Tree'], features, labels, 1000)
 ### Task 5: Tune your classifier to achieve better than .3 precision and recall 
 ### using our testing script. Check the tester.py script in the final project
 ### folder for details on the evaluation method, especially the test_classifier
@@ -151,18 +147,88 @@ print type(clfs['classifier'][max_classifier_key])
 
 # Example starting point. Try investigating other evaluation techniques!
 #from sklearn.cross_validation import train_test_split
+
 features_train, features_test, labels_train, labels_test = \
 	train_test_split(features, labels, test_size=0.3, random_state=42)
 
 
-params={ 'kernel': ('linear', 'poly', 'rbf', 'sigmoid', 'precomputed'), 'C':range(1,20000, 1000)	}
+params = {'min_samples_leaf':range(1, 20), 'max_depth':range(1, 20), 'class_weight':['balanced'], 'criterion':['gini', 'entropy']}
 
-#clf= SVC(C= 10065 , gamma = 'auto', kernel='rbf')	
-clf = GridSearchCV(SVC(), param_grid=params, scoring='f1', cv=10)
+clf = GridSearchCV(DecisionTreeClassifier(), param_grid=params, scoring='average_precision', cv=10, n_jobs=4)
 t0 = time()
 clf.fit(features_train, labels_train)
-print 'Grid search took: ', round(time()-t0, 3), 's'
+print 'Grid  Decision Tree search took: ', round(time()-t0, 3), 's'
 print clf.best_params_
+
+#params={ 'kernel': ('linear', 'poly', 'rbf', 'sigmoid', 'precomputed'), 'C':range(1,20000, 1000)	} #params too broad doens't finish runing single threaded
+
+params={ 'kernel': ['rbf', 'sigmoid'], 'C':range(1,20000, 10)	}
+
+features = preprocessing.scale(features)
+
+
+clf= GridSearchCV(SVC(), param_grid=params, scoring='average_precision', n_jobs=4)
+t0 = time()
+clf.fit(features_train, labels_train)
+print 'Grid search SVM took: ', round(time()-t0, 3), 's'
+print clf.best_params_
+
+
+print "Parameter tuning comparision round 2"
+clfs = {'classifier':{}, 'result':{}, 'params':{}}
+clfs['classifier']['Decision Tree'] = DecisionTreeClassifier(min_samples_leaf= 17, criterion='gini', max_depth=2, class_weight='balanced')
+clfs['classifier']['SVC'] = SVC(kernel='sigmoid', C=1)
+
+
+
+for clf_key in clfs['classifier'].iterkeys():
+	t0 = time()
+	clfs['classifier'][clf_key].fit(features_train, labels_train)
+	print clf_key
+	print 'Fit took: ', round(time()-t0, 3), 's'
+
+	t0 = time()
+	pred= clfs['classifier'][clf_key].predict(features_test)
+	print 'Prediction took: ', round(time()-t0, 3), 's'
+
+	t0 = time()
+	score =clfs['classifier'][clf_key].score(features_test, labels_test)
+
+	print 'Scoring took: ', round(time()-t0, 3), 's'
+	print 'Accuracy of : ', score
+	clfs['result'][clf_key]=score
+
+print "Max classifier:"
+max_classifier_key = max(clfs['result'].iteritems(), key=operator.itemgetter(1))[0]
+print max_classifier_key
+
+print 'Grid Search for AAdaboost  one'
+#params={ 'n_estimators': range(1,600, 1), 'learning_rate':np.arange(.1,1, .1)	}
+params={ 'n_estimators': range(100,200, 10), 'learning_rate':np.arange(.1,.3, .1)	}
+clf= GridSearchCV( AdaBoostClassifier(DecisionTreeClassifier(min_samples_leaf= 17, criterion='gini', max_depth=2, class_weight='balanced')), param_grid=params, scoring='f1', n_jobs=4)
+t0 = time()
+clf.fit(features_train, labels_train)
+print 'Optimized  Adaboost took: ', round(time()-t0, 3), 's'
+print clf.best_params_
+
+clf = AdaBoostClassifier(DecisionTreeClassifier(min_samples_leaf= 17, criterion='gini', max_depth=2, class_weight='balanced'), n_estimators=142, learning_rate= 0.20000000000000001)
+t0 = time()
+clf.fit(features_train, labels_train)
+print clf_key
+print 'Fit took: ', round(time()-t0, 3), 's'
+
+t0 = time()
+pred= clf.predict(features_test)
+print 'Prediction took: ', round(time()-t0, 3), 's'
+
+t0 = time()
+score =clf.score(features_test, labels_test)
+
+print 'Scoring took: ', round(time()-t0, 3), 's'
+print 'Accuracy of : ', score
+
+test_classifier(clf, features, labels, 1000)
+
 
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
 ### check your results. You do not need to change anything below, but make sure
@@ -171,9 +237,3 @@ print clf.best_params_
 
 dump_classifier_and_data(clf, my_dataset, features_list)
 
-
-'''
-Cite:
-https://www.wordnik.com/lists/star-wars-words
-
-'''

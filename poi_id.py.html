@@ -1,0 +1,188 @@
+<html><head>
+<title>poi_id.py</title>
+<meta name="Generator" content="htmlizer/[twisted, version 16.0.0]" />
+<link rel="alternate" href="poi_id.py" type="text/x-python" />
+
+</head>
+<body>
+<pre><span class="py-src-comment">#!/usr/bin/python</span>
+
+<span class="py-src-keyword">import</span> <span class="py-src-variable">sys</span>
+<span class="py-src-keyword">import</span> <span class="py-src-variable">pickle</span>
+<span class="py-src-variable">sys</span>.<span class="py-src-variable">path</span>.<span class="py-src-variable">append</span>(<span class="py-src-string">"../tools/"</span>)
+
+<span class="py-src-keyword">from</span> <span class="py-src-variable">feature_format</span> <span class="py-src-keyword">import</span> <span class="py-src-variable">featureFormat</span>, <span class="py-src-variable">targetFeatureSplit</span>
+<span class="py-src-keyword">from</span> <span class="py-src-variable">tester</span> <span class="py-src-keyword">import</span> <span class="py-src-variable">dump_classifier_and_data</span>, <span class="py-src-variable">test_classifier</span>
+
+<span class="py-src-comment">#my adds:</span>
+<span class="py-src-keyword">import</span> <span class="py-src-variable">matplotlib</span>.<span class="py-src-variable">pyplot</span>
+<span class="py-src-keyword">from</span> <span class="py-src-variable">sklearn</span>.<span class="py-src-variable">cross_validation</span>  <span class="py-src-keyword">import</span> <span class="py-src-variable">train_test_split</span>
+<span class="py-src-keyword">from</span> <span class="py-src-variable">sklearn</span>.<span class="py-src-variable">linear_model</span> <span class="py-src-keyword">import</span> <span class="py-src-variable">LinearRegression</span>
+<span class="py-src-keyword">import</span> <span class="py-src-variable">numpy</span> <span class="py-src-keyword">as</span> <span class="py-src-variable">np</span>
+<span class="py-src-keyword">import</span> <span class="py-src-variable">operator</span>
+<span class="py-src-keyword">from</span> <span class="py-src-variable">collections</span> <span class="py-src-keyword">import</span> <span class="py-src-variable">OrderedDict</span>
+<span class="py-src-keyword">from</span> <span class="py-src-variable">sklearn</span>.<span class="py-src-variable">ensemble</span> <span class="py-src-keyword">import</span> <span class="py-src-variable">AdaBoostClassifier</span>
+<span class="py-src-keyword">from</span> <span class="py-src-variable">time</span> <span class="py-src-keyword">import</span> <span class="py-src-variable">time</span>
+<span class="py-src-keyword">from</span> <span class="py-src-variable">sklearn</span>.<span class="py-src-variable">naive_bayes</span> <span class="py-src-keyword">import</span> <span class="py-src-variable">GaussianNB</span>
+<span class="py-src-keyword">from</span> <span class="py-src-variable">sklearn</span>.<span class="py-src-variable">tree</span> <span class="py-src-keyword">import</span> <span class="py-src-variable">DecisionTreeClassifier</span>
+<span class="py-src-keyword">from</span> <span class="py-src-variable">sklearn</span>.<span class="py-src-variable">grid_search</span> <span class="py-src-keyword">import</span> <span class="py-src-variable">GridSearchCV</span>
+
+<span class="py-src-keyword">from</span> <span class="py-src-variable">sklearn</span>.<span class="py-src-variable">svm</span> <span class="py-src-keyword">import</span> <span class="py-src-variable">SVC</span>
+
+
+<span class="py-src-comment">### Task 1: Select what features you'll use.</span>
+<span class="py-src-comment">### features_list is a list of strings, each of which is a feature name.</span>
+<span class="py-src-comment">### The first feature must be "poi".</span>
+<span class="py-src-variable">features_list</span> = [<span class="py-src-string">'poi'</span>, <span class="py-src-string">'salary'</span>, <span class="py-src-string">'total_payments'</span>, <span class="py-src-string">'bonus'</span>, <span class="py-src-string">'restricted_stock_deferred'</span>,  <span class="py-src-string">'from_poi_frac'</span>, <span class="py-src-string">'to_poi_frac'</span>, <span class="py-src-string">'exercised_stock_options'</span>, <span class="py-src-string">'long_term_incentive'</span> ] <span class="py-src-comment"># You will need to use more features</span>
+
+<span class="py-src-comment">### Load the dictionary containing the dataset</span>
+<span class="py-src-keyword">with</span> <span class="py-src-variable">open</span>(<span class="py-src-string">"final_project_dataset.pkl"</span>, <span class="py-src-string">"r"</span>) <span class="py-src-keyword">as</span> <span class="py-src-variable">data_file</span>:
+	<span class="py-src-variable">data_dict</span> = <span class="py-src-variable">pickle</span>.<span class="py-src-variable">load</span>(<span class="py-src-variable">data_file</span>)
+
+<span class="py-src-comment">### Task 2: Remove outliers</span>
+<span class="py-src-comment">#plot outliers</span>
+
+<span class="py-src-comment">#build data dict</span>
+
+ <span class="py-src-variable">my_data</span>={}
+ <span class="py-src-variable">my_data</span>[<span class="py-src-string">'name'</span>] = [<span class="py-src-variable">per</span>[<span class="py-src-number">0</span>] <span class="py-src-keyword">for</span> <span class="py-src-variable">per</span> <span class="py-src-keyword">in</span> <span class="py-src-variable">data_dict</span>.<span class="py-src-variable">items</span>()]
+
+ <span class="py-src-keyword">for</span> <span class="py-src-variable">key</span> <span class="py-src-keyword">in</span>  <span class="py-src-variable">data_dict</span>[<span class="py-src-variable">data_dict</span>.<span class="py-src-variable">keys</span>()[<span class="py-src-number">0</span>]].<span class="py-src-variable">keys</span>():
+		<span class="py-src-variable">my_data</span>[<span class="py-src-variable">key</span>] = [<span class="py-src-number">0</span> <span class="py-src-keyword">if</span> <span class="py-src-variable">per</span>[<span class="py-src-number">1</span>][<span class="py-src-variable">key</span>]==<span class="py-src-string">'NaN'</span> <span class="py-src-keyword">else</span> <span class="py-src-variable">per</span>[<span class="py-src-number">1</span>][<span class="py-src-variable">key</span>] <span class="py-src-keyword">for</span> <span class="py-src-variable">per</span> <span class="py-src-keyword">in</span> <span class="py-src-variable">data_dict</span>.<span class="py-src-variable">items</span>()]  
+
+ <span class="py-src-comment">#identify outliers and remove them by forcing to 0. can't pop them without screwin up the index:</span>
+ <span class="py-src-keyword">for</span> <span class="py-src-variable">key</span> <span class="py-src-keyword">in</span> <span class="py-src-variable">my_data</span>.<span class="py-src-variable">iterkeys</span>():
+		<span class="py-src-variable">cutoff</span> = <span class="py-src-variable">int</span>(<span class="py-src-variable">round</span>(<span class="py-src-variable">len</span>(<span class="py-src-variable">my_data</span>[<span class="py-src-variable">key</span>]) *<span class="py-src-number">.05</span>))
+  <span class="py-src-keyword">print</span>  <span class="py-src-string">"removing top "</span>, <span class="py-src-variable">cutoff</span>,<span class="py-src-string">"outliers for "</span>, <span class="py-src-variable">key</span>
+  <span class="py-src-keyword">if</span> <span class="py-src-variable">key</span>!=<span class="py-src-string">'poi'</span>:
+			<span class="py-src-keyword">for</span> <span class="py-src-variable">v</span> <span class="py-src-keyword">in</span>  <span class="py-src-variable">sorted</span>(<span class="py-src-variable">my_data</span>[<span class="py-src-variable">key</span>], <span class="py-src-variable">reverse</span>=<span class="py-src-variable">True</span>)[:<span class="py-src-variable">cutoff</span>]:
+    <span class="py-src-comment">#print my_data[key].index(v)</span>
+				<span class="py-src-variable">my_data</span>[<span class="py-src-variable">key</span>][<span class="py-src-variable">my_data</span>[<span class="py-src-variable">key</span>].<span class="py-src-variable">index</span>(<span class="py-src-variable">v</span>) ] = <span class="py-src-number">0</span>
+  
+  
+<span class="py-src-comment">### Task 3: Create new feature(s)</span>
+<span class="py-src-comment">#new feature will be % of messages to POI and From POI</span>
+<span class="py-src-comment">#Using list comprehension to avoid having to initailize array  of proper length for new term</span>
+<span class="py-src-variable">my_data</span>[<span class="py-src-string">'from_poi_frac'</span>] = [<span class="py-src-number">0</span> <span class="py-src-keyword">if</span> <span class="py-src-variable">my_data</span>[<span class="py-src-string">'from_messages'</span>][<span class="py-src-variable">i</span>] ==<span class="py-src-number">0</span>  <span class="py-src-keyword">else</span> (<span class="py-src-variable">float</span>(<span class="py-src-variable">my_data</span>[<span class="py-src-string">'from_poi_to_this_person'</span>][<span class="py-src-variable">i</span>]) / <span class="py-src-variable">float</span>(<span class="py-src-variable">my_data</span>[<span class="py-src-string">'from_messages'</span>][<span class="py-src-variable">i</span>])) <span class="py-src-keyword">for</span> <span class="py-src-variable">i</span> <span class="py-src-keyword">in</span> <span class="py-src-variable">range</span>(<span class="py-src-number">0</span>, <span class="py-src-variable">len</span>(<span class="py-src-variable">my_data</span>[<span class="py-src-string">'to_messages'</span>]))]
+<span class="py-src-variable">my_data</span>[<span class="py-src-string">'to_poi_frac'</span>] = [<span class="py-src-number">0</span> <span class="py-src-keyword">if</span> <span class="py-src-variable">my_data</span>[<span class="py-src-string">'to_messages'</span>][<span class="py-src-variable">i</span>]==<span class="py-src-number">0</span> <span class="py-src-keyword">else</span> (<span class="py-src-variable">float</span>(<span class="py-src-variable">my_data</span>[<span class="py-src-string">'from_this_person_to_poi'</span>][<span class="py-src-variable">i</span>])/ <span class="py-src-variable">float</span>(<span class="py-src-variable">my_data</span>[<span class="py-src-string">'to_messages'</span>][<span class="py-src-variable">i</span>]))  <span class="py-src-keyword">for</span> <span class="py-src-variable">i</span> <span class="py-src-keyword">in</span> <span class="py-src-variable">range</span>(<span class="py-src-number">0</span>, <span class="py-src-variable">len</span>(<span class="py-src-variable">my_data</span>[<span class="py-src-string">'to_messages'</span>]))]
+
+
+<span class="py-src-comment">### Store to my_dataset for easy export below.</span>
+<span class="py-src-variable">my_dataset</span> = <span class="py-src-variable">my_data</span>
+
+<span class="py-src-comment">### Extract features and labels from dataset for local testing</span>
+
+
+<span class="py-src-string">'''due to the previous converstion of dict -&gt; array  I can skip feature format func, 
+ I still need to  convert my data to numpy arrays and make data[0]=poi for comapitlity later
+reduce data set to only the ones in the freature list and set data[0] = poi for compatiblity'''</span>
+
+<span class="py-src-variable">data</span> = [ <span class="py-src-variable">np</span>.<span class="py-src-variable">array</span>(<span class="py-src-variable">my_data</span>[<span class="py-src-string">'poi'</span>]) ]
+
+<span class="py-src-comment">#extract only features in list</span>
+<span class="py-src-keyword">for</span> <span class="py-src-variable">key</span> <span class="py-src-keyword">in</span> <span class="py-src-variable">features_list</span>:
+	<span class="py-src-keyword">if</span> <span class="py-src-variable">key</span>!=<span class="py-src-string">'poi'</span>:
+		<span class="py-src-variable">data</span>.<span class="py-src-variable">append</span>( <span class="py-src-variable">np</span>.<span class="py-src-variable">array</span>(<span class="py-src-variable">my_data</span>[<span class="py-src-variable">key</span>]).<span class="py-src-variable">astype</span>(<span class="py-src-variable">np</span>.<span class="py-src-variable">int</span>))
+ <span class="py-src-keyword">if</span> <span class="py-src-variable">key</span> == <span class="py-src-string">'to_poi_frac'</span> <span class="py-src-keyword">or</span> <span class="py-src-variable">key</span> == <span class="py-src-string">'from_poi_frac'</span>:
+		<span class="py-src-variable">data</span>.<span class="py-src-variable">append</span>( <span class="py-src-variable">np</span>.<span class="py-src-variable">array</span>(<span class="py-src-variable">my_data</span>[<span class="py-src-variable">key</span>]).<span class="py-src-variable">astype</span>(<span class="py-src-variable">np</span>.<span class="py-src-variable">float</span>))
+
+
+
+<span class="py-src-variable">labels</span>, <span class="py-src-variable">features</span> = <span class="py-src-variable">targetFeatureSplit</span>(<span class="py-src-variable">data</span>)
+
+
+<span class="py-src-variable">labels</span> = <span class="py-src-variable">np</span>.<span class="py-src-variable">array</span>(<span class="py-src-variable">my_data</span>[<span class="py-src-string">'poi'</span>]) 
+<span class="py-src-variable">features</span> = []
+<span class="py-src-keyword">for</span> <span class="py-src-variable">key</span> <span class="py-src-keyword">in</span> <span class="py-src-variable">features_list</span>:
+	<span class="py-src-keyword">if</span> <span class="py-src-variable">key</span>!=<span class="py-src-string">'poi'</span>:
+		<span class="py-src-variable">features</span>.<span class="py-src-variable">append</span>( <span class="py-src-variable">np</span>.<span class="py-src-variable">array</span>(<span class="py-src-variable">my_data</span>[<span class="py-src-variable">key</span>]).<span class="py-src-variable">astype</span>(<span class="py-src-variable">np</span>.<span class="py-src-variable">int</span>))
+ <span class="py-src-keyword">if</span> <span class="py-src-variable">key</span> == <span class="py-src-string">'to_poi_frac'</span> <span class="py-src-keyword">or</span> <span class="py-src-variable">key</span> == <span class="py-src-string">'from_poi_frac'</span>:
+		<span class="py-src-variable">features</span>.<span class="py-src-variable">append</span>( <span class="py-src-variable">np</span>.<span class="py-src-variable">array</span>(<span class="py-src-variable">my_data</span>[<span class="py-src-variable">key</span>]).<span class="py-src-variable">astype</span>(<span class="py-src-variable">np</span>.<span class="py-src-variable">float</span>))
+
+
+<span class="py-src-comment">#Currentl shape of features is teatures == rows and people == columns need to transpose for compatiblity</span>
+<span class="py-src-variable">features</span> = <span class="py-src-variable">np</span>.<span class="py-src-variable">transpose</span>(<span class="py-src-variable">features</span>)
+
+
+<span class="py-src-comment">### Task 4: Try a varity of classifiers</span>
+<span class="py-src-comment">### Please name your classifier clf for easy export below.</span>
+<span class="py-src-comment">### Note that if you want to do PCA or other multi-stage operations,</span>
+<span class="py-src-comment">### you'll need to use Pipelines. For more info:</span>
+<span class="py-src-comment">### http://scikit-learn.org/stable/modules/pipeline.html</span>
+
+<span class="py-src-variable">features_train</span>, <span class="py-src-variable">features_test</span>, <span class="py-src-variable">labels_train</span>, <span class="py-src-variable">labels_test</span> =
+ <span class="py-src-variable">train_test_split</span>(<span class="py-src-variable">features</span>, <span class="py-src-variable">labels</span>, <span class="py-src-variable">test_size</span>=<span class="py-src-number">0.3</span>, <span class="py-src-variable">random_state</span>=<span class="py-src-number">42</span>)
+
+<span class="py-src-comment">#create dict for diff classifiers</span>
+<span class="py-src-variable">clfs</span> = {<span class="py-src-string">'classifier'</span>:{}, <span class="py-src-string">'result'</span>:{}, <span class="py-src-string">'params'</span>:{}}
+<span class="py-src-variable">clfs</span>[<span class="py-src-string">'classifier'</span>][<span class="py-src-string">'Niaeve Bayes'</span>] = <span class="py-src-variable">GaussianNB</span>()
+<span class="py-src-variable">clfs</span>[<span class="py-src-string">'classifier'</span>][<span class="py-src-string">'Ada Boost'</span>] = <span class="py-src-variable">AdaBoostClassifier</span>(<span class="py-src-variable">n_estimators</span> =<span class="py-src-number">13</span>, <span class="py-src-variable">learning_rate</span> =<span class="py-src-number">1</span>)
+<span class="py-src-variable">clfs</span>[<span class="py-src-string">'classifier'</span>][<span class="py-src-string">'Decision Tree'</span>] = <span class="py-src-variable">DecisionTreeClassifier</span>(<span class="py-src-variable">criterion</span>=<span class="py-src-string">'entropy'</span>,<span class="py-src-variable">min_samples_split</span>=<span class="py-src-number">40</span>)
+<span class="py-src-variable">clfs</span>[<span class="py-src-string">'classifier'</span>][<span class="py-src-string">'SVC'</span>] = <span class="py-src-variable">SVC</span>(<span class="py-src-variable">C</span>= <span class="py-src-number">10065</span> , <span class="py-src-variable">gamma</span> = <span class="py-src-string">'auto'</span>, <span class="py-src-variable">kernel</span>=<span class="py-src-string">'rbf'</span>)
+<span class="py-src-variable">max_score</span> = <span class="py-src-number">0.0</span>
+<span class="py-src-string">'''
+
+clfs['params']['Niaeve Bayes'] = {}
+clfs['params']['Ada Boost'] = 
+clfs['params']['Decision Tree'] = 
+'''</span>
+<span class="py-src-keyword">for</span> <span class="py-src-variable">clf_key</span> <span class="py-src-keyword">in</span> <span class="py-src-variable">clfs</span>[<span class="py-src-string">'classifier'</span>].<span class="py-src-variable">iterkeys</span>():
+	<span class="py-src-variable">t0</span> = <span class="py-src-variable">time</span>()
+ <span class="py-src-variable">clfs</span>[<span class="py-src-string">'classifier'</span>][<span class="py-src-variable">clf_key</span>].<span class="py-src-variable">fit</span>(<span class="py-src-variable">features_train</span>, <span class="py-src-variable">labels_train</span>)
+ <span class="py-src-keyword">print</span> <span class="py-src-variable">clf_key</span>
+ <span class="py-src-keyword">print</span> <span class="py-src-string">'Fit took: '</span>, <span class="py-src-variable">round</span>(<span class="py-src-variable">time</span>()-<span class="py-src-variable">t0</span>, <span class="py-src-number">3</span>), <span class="py-src-string">'s'</span>
+
+ <span class="py-src-variable">t0</span> = <span class="py-src-variable">time</span>()
+ <span class="py-src-variable">pred</span>= <span class="py-src-variable">clfs</span>[<span class="py-src-string">'classifier'</span>][<span class="py-src-variable">clf_key</span>].<span class="py-src-variable">predict</span>(<span class="py-src-variable">features_test</span>)
+ <span class="py-src-keyword">print</span> <span class="py-src-string">'Prediction took: '</span>, <span class="py-src-variable">round</span>(<span class="py-src-variable">time</span>()-<span class="py-src-variable">t0</span>, <span class="py-src-number">3</span>), <span class="py-src-string">'s'</span>
+
+ <span class="py-src-variable">t0</span> = <span class="py-src-variable">time</span>()
+ <span class="py-src-variable">score</span> = <span class="py-src-variable">clfs</span>[<span class="py-src-string">'classifier'</span>][<span class="py-src-variable">clf_key</span>].<span class="py-src-variable">score</span>(<span class="py-src-variable">features_test</span>, <span class="py-src-variable">labels_test</span>)
+
+ <span class="py-src-keyword">print</span> <span class="py-src-string">'Scoring took: '</span>, <span class="py-src-variable">round</span>(<span class="py-src-variable">time</span>()-<span class="py-src-variable">t0</span>, <span class="py-src-number">3</span>), <span class="py-src-string">'s'</span>
+ <span class="py-src-keyword">print</span> <span class="py-src-string">'Accuracy of : '</span>, <span class="py-src-variable">score</span>
+ <span class="py-src-variable">clfs</span>[<span class="py-src-string">'result'</span>][<span class="py-src-variable">clf_key</span>]=<span class="py-src-variable">score</span>
+
+<span class="py-src-keyword">print</span> <span class="py-src-string">"Max classifier:"</span>
+<span class="py-src-variable">max_classifier_key</span> = <span class="py-src-variable">max</span>(<span class="py-src-variable">clfs</span>[<span class="py-src-string">'result'</span>].<span class="py-src-variable">iteritems</span>(), <span class="py-src-variable">key</span>=<span class="py-src-variable">operator</span>.<span class="py-src-variable">itemgetter</span>(<span class="py-src-number">1</span>))[<span class="py-src-number">0</span>]
+<span class="py-src-keyword">print</span> <span class="py-src-variable">max_classifier_key</span>
+<span class="py-src-keyword">print</span> <span class="py-src-variable">type</span>(<span class="py-src-variable">clfs</span>[<span class="py-src-string">'classifier'</span>][<span class="py-src-variable">max_classifier_key</span>])
+
+<span class="py-src-comment">#test_classifier(clfs['classifier'][max_classifier_key], data, features_list, folds = 1000)</span>
+<span class="py-src-comment">### Task 5: Tune your classifier to achieve better than .3 precision and recall </span>
+<span class="py-src-comment">### using our testing script. Check the tester.py script in the final project</span>
+<span class="py-src-comment">### folder for details on the evaluation method, especially the test_classifier</span>
+<span class="py-src-comment">### function. Because of the small size of the dataset, the script uses</span>
+<span class="py-src-comment">### stratified shuffle split cross validation. For more info: </span>
+<span class="py-src-comment">### http://scikit-learn.org/stable/modules/generated/sklearn.cross_validation.StratifiedShuffleSplit.html</span>
+
+<span class="py-src-comment"># Example starting point. Try investigating other evaluation techniques!</span>
+<span class="py-src-comment">#from sklearn.cross_validation import train_test_split</span>
+<span class="py-src-variable">features_train</span>, <span class="py-src-variable">features_test</span>, <span class="py-src-variable">labels_train</span>, <span class="py-src-variable">labels_test</span> =
+ <span class="py-src-variable">train_test_split</span>(<span class="py-src-variable">features</span>, <span class="py-src-variable">labels</span>, <span class="py-src-variable">test_size</span>=<span class="py-src-number">0.3</span>, <span class="py-src-variable">random_state</span>=<span class="py-src-number">42</span>)
+
+
+<span class="py-src-variable">params</span>={ <span class="py-src-string">'kernel'</span>: (<span class="py-src-string">'linear'</span>, <span class="py-src-string">'poly'</span>, <span class="py-src-string">'rbf'</span>, <span class="py-src-string">'sigmoid'</span>, <span class="py-src-string">'precomputed'</span>), <span class="py-src-string">'C'</span>:<span class="py-src-variable">range</span>(<span class="py-src-number">1</span>,<span class="py-src-number">20000</span>, <span class="py-src-number">1000</span>) }
+
+<span class="py-src-comment">#clf= SVC(C= 10065 , gamma = 'auto', kernel='rbf')	</span>
+<span class="py-src-variable">clf</span> = <span class="py-src-variable">GridSearchCV</span>(<span class="py-src-variable">SVC</span>(), <span class="py-src-variable">param_grid</span>=<span class="py-src-variable">params</span>, <span class="py-src-variable">scoring</span>=<span class="py-src-string">'f1'</span>, <span class="py-src-variable">cv</span>=<span class="py-src-number">10</span>)
+<span class="py-src-variable">t0</span> = <span class="py-src-variable">time</span>()
+<span class="py-src-variable">clf</span>.<span class="py-src-variable">fit</span>(<span class="py-src-variable">features_train</span>, <span class="py-src-variable">labels_train</span>)
+<span class="py-src-keyword">print</span> <span class="py-src-string">'Grid search took: '</span>, <span class="py-src-variable">round</span>(<span class="py-src-variable">time</span>()-<span class="py-src-variable">t0</span>, <span class="py-src-number">3</span>), <span class="py-src-string">'s'</span>
+<span class="py-src-keyword">print</span> <span class="py-src-variable">clf</span>.<span class="py-src-variable">best_params_</span>
+
+<span class="py-src-comment">### Task 6: Dump your classifier, dataset, and features_list so anyone can</span>
+<span class="py-src-comment">### check your results. You do not need to change anything below, but make sure</span>
+<span class="py-src-comment">### that the version of poi_id.py that you submit can be run on its own and</span>
+<span class="py-src-comment">### generates the necessary .pkl files for validating your results.</span>
+
+<span class="py-src-variable">dump_classifier_and_data</span>(<span class="py-src-variable">clf</span>, <span class="py-src-variable">my_dataset</span>, <span class="py-src-variable">features_list</span>)
+
+
+<span class="py-src-string">'''
+Cite:
+https://www.wordnik.com/lists/star-wars-words
+
+'''</span>
+</pre>
+</body>
