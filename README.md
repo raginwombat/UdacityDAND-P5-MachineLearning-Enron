@@ -1,9 +1,57 @@
 # UdacityDAND-P5-MachineLearning-Enron
 ## This is the final project for Intro to Machine learning for Udacity's Data Analyst Nanodegree
-## Project was built using the following packages.
-* matplotlib 2.1.0
-* numpy 1.13.0
-* pip 9.0.1
-* python 2.7.14
-* scikit-learn 0.19.0
-* scipy 0.19.1
+## Project was built using Anaconda with the following packages.
+* backports                 1.0              py27h63c9359_1  
+* backports.functools_lru_cache 1.4              py27he8db605_1  
+* backports_abc             0.5              py27h7b3c97b_0  
+* certifi                   2017.11.5        py27h71e7faf_0  
+* cycler                    0.10.0           py27hc7354d3_0  
+* dbus                      1.10.22              h3b5a359_0  
+* expat                     2.2.5                he0dffb1_0  
+* fontconfig                2.12.4               h88586e7_1  
+* freetype                  2.8                  hab7d2ae_1  
+* functools32               3.2.3.2          py27h4ead58f_1  
+* glib                      2.53.6               h5d9569c_2  
+* gst-plugins-base          1.12.2               he3457e5_0  
+* gstreamer                 1.12.2               h4f93127_0  
+* icu                       58.2                 h9c2bf20_1  
+* jpeg                      9b                   h024ee3a_2  
+* libedit                   3.1                  heed3624_0  
+* libffi                    3.2.1                hd88cf55_4  
+* libgcc-ng                 7.2.0                h7cc24e2_2  
+* libgfortran               3.0.0                         1  
+* libpng                    1.6.32               hbd3595f_4  
+* libstdcxx-ng              7.2.0                h7a57d05_2  
+* libxcb                    1.12                 hcd93eb1_4  
+* libxml2                   2.9.4                h2e8b1d7_6  
+* matplotlib                2.1.0            py27h09aba24_0  
+* mkl                       2017.0.3                      0  
+* ncurses                   6.0                  h9df7e31_2  
+* nltk                      3.2.4                    py27_0  
+* numpy                     1.13.0                   py27_0  
+* openssl                   1.0.2l                        0  
+* pcre                      8.41                 hc27e229_1  
+* pip                       9.0.1                    py27_1  
+* pyparsing                 2.2.0            py27hf1513f8_1  
+* pyqt                      5.6.0            py27h4b1e83c_5  
+* python                    2.7.14              h89e7a4a_22  
+* python-dateutil           2.6.1            py27h4ca5741_1  
+* pytz                      2017.3           py27h001bace_0  
+* qt                        5.6.2               h974d657_12  
+* readline                  7.0                  ha6073c6_4  
+* requests                  2.14.2                   py27_0  
+* scikit-learn              0.19.0              np113py27_0  
+* scipy                     0.19.1              np113py27_0  
+* setuptools                27.2.0                   py27_0  
+* singledispatch            3.4.0.3          py27h9bcb476_0  
+* sip                       4.18.1           py27he9ba0ab_2  
+* six                       1.10.0                   py27_0  
+* sqlite                    3.20.1               hb898158_2  
+* ssl_match_hostname        3.5.0.1          py27h4ec10b9_2  
+* subprocess32              3.2.7            py27h373dbce_0  
+* tk                        8.6.7                hc745277_3  
+* tornado                   4.5.2            py27h97b179f_0  
+* wheel                     0.29.0                   py27_0  
+* xz                        5.2.3                h55aa19d_2  
+* zlib                      1.2.11               ha838bed_2  
+ 
