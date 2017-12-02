@@ -24,66 +24,6 @@ from sklearn import preprocessing
 
 ### Task 1: Select what features you'll use.
 ### features_list is a list of strings, each of which is a feature name.
-
-''''
-Code usd to investigate data set that isn't part of the 
-#Test plot of some data	
-	matplotlib.pyplot.scatter( my_data['salary'], my_data['deferred_income'])
-	matplotlib.pyplot.xlabel("salary")
-	matplotlib.pyplot.ylabel("deferred_income")
-	#matplotlib.pyplot.show()
-
-	for i,rs in enumerate(my_data['restricted_stock_deferred'] ):
-		if rs<0:
-			#print i
-			#print 'person: '+ label_name[i]
-			break
-	
-	matplotlib.pyplot.scatter( my_data['salary'], my_data['total_payments'])
-	matplotlib.pyplot.title("orig")
-	matplotlib.pyplot.xlabel("salary")
-	matplotlib.pyplot.ylabel("total_payments")
-	matplotlib.pyplot.show()
- #Salary seems like a pretty straight forward and stable metric to use. we'll use it as the predictive key for the  rest of the features
-	#check regression for salary
-	print "Outlier Testing:"
-	#first convert data to the correct numpyarray for linear regression aalysis
-	for key in my_data.iterkeys():
-		if key != 'label_name':
-			my_data[key] = np.reshape( np.array(my_data[key]).astype(np.int), (len(my_data[key]), 1))
-
-	#crunch regression for all of the data against salary
-	print "Regression crunching held against salary"
-	cleaned_training_data={} #stage dict for cleaned data, using loop for regression crunch is faster than breakind out
-	for target in my_data.iterkeys():
-		if target != 'label_name' and target != 'salary':
-			print "Reg for: "+target
-
-			salary_train, salary_test, target_train, target_test = train_test_split(my_data['salary'], my_data[target] , test_size=0.5, random_state=42)
-			reg = LinearRegression()
-			reg.fit(salary_train, target_train)
-			
-			print reg.coef_
-			print reg.intercept_
-			print reg.score(salary_test, target_test)
-
-	
-			#write out cleaned data for checking
-			predictions = reg.predict(target_train)
-			#print predictions
-			cleaned_training_data[target] = outlierCleaner(predictions, my_data['salary'], my_data[target] , .1)
-
-	print len()
-
-matplotlib.pyplot.scatter( my_data['salary'], cleaned_training_data['deferred_income'])
-	matplotlib.pyplot.title("cleaned")
-	matplotlib.pyplot.xlabel("salary")
-	matplotlib.pyplot.ylabel("deferred_income")
-	matplotlib.pyplot.show()	
-			
-
- '''
-
 ### The first feature must be "poi".
 features_list = ['poi', 'salary', 'total_payments', 'bonus', 'restricted_stock_deferred',  'from_poi_frac', 'to_poi_frac',	'exercised_stock_options', 'long_term_incentive' ] # You will need to use more features
 
