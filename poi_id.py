@@ -25,30 +25,8 @@ from sklearn import preprocessing
 ### Task 1: Select what features you'll use.
 ### features_list is a list of strings, each of which is a feature name.
 
-
-### The first feature must be "poi".
-features_list = ['poi', 'salary', 'total_payments', 'bonus', 'restricted_stock_deferred',  'from_poi_frac', 'to_poi_frac',	'exercised_stock_options', 'long_term_incentive' ] # You will need to use more features
-
-### Load the dictionary containing the dataset
-with open("final_project_dataset.pkl", "r") as data_file:
-	data_dict = pickle.load(data_file)
-
-
-#Stats on data:
-	print "Number fo people in dataset is:",  len(data_dict)
-	print data_dict.items()[0]
-	print "Available Data Points for each person: "
-	print data_dict.items()[0][1].keys()
-#build data dict
-
-	my_data={}
-	my_data['name'] = [per[0] for per in data_dict.items()]
-
-	for key in  data_dict[data_dict.keys()[0]].keys():
-		my_data[key] = [0 if per[1][key]=='NaN' else per[1][key] for per in data_dict.items()]		
-
-# Inital data set investigation: 
-#Code used to investigate data set that isn't part of the 
+''''
+Code usd to investigate data set that isn't part of the 
 #Test plot of some data	
 	matplotlib.pyplot.scatter( my_data['salary'], my_data['deferred_income'])
 	matplotlib.pyplot.xlabel("salary")
@@ -58,7 +36,7 @@ with open("final_project_dataset.pkl", "r") as data_file:
 	for i,rs in enumerate(my_data['restricted_stock_deferred'] ):
 		if rs<0:
 			#print i
-			#print 'person: '+ poi[i]
+			#print 'person: '+ label_name[i]
 			break
 	
 	matplotlib.pyplot.scatter( my_data['salary'], my_data['total_payments'])
@@ -71,7 +49,7 @@ with open("final_project_dataset.pkl", "r") as data_file:
 	print "Outlier Testing:"
 	#first convert data to the correct numpyarray for linear regression aalysis
 	for key in my_data.iterkeys():
-		if key != 'label_name' and key != 'email_address' and key != 'name':
+		if key != 'label_name':
 			my_data[key] = np.reshape( np.array(my_data[key]).astype(np.int), (len(my_data[key]), 1))
 
 	#crunch regression for all of the data against salary
@@ -97,17 +75,33 @@ with open("final_project_dataset.pkl", "r") as data_file:
 
 	print len()
 
-	matplotlib.pyplot.scatter( my_data['salary'], cleaned_training_data['deferred_income'])
+matplotlib.pyplot.scatter( my_data['salary'], cleaned_training_data['deferred_income'])
 	matplotlib.pyplot.title("cleaned")
 	matplotlib.pyplot.xlabel("salary")
 	matplotlib.pyplot.ylabel("deferred_income")
 	matplotlib.pyplot.show()	
 			
 
+ '''
+
+### The first feature must be "poi".
+features_list = ['poi', 'salary', 'total_payments', 'bonus', 'restricted_stock_deferred',  'from_poi_frac', 'to_poi_frac',	'exercised_stock_options', 'long_term_incentive' ] # You will need to use more features
+
+### Load the dictionary containing the dataset
+with open("final_project_dataset.pkl", "r") as data_file:
+	data_dict = pickle.load(data_file)
+
 
 ### Task 2: Remove outliers
 #plot outliers
 
+#build data dict
+
+	my_data={}
+	my_data['name'] = [per[0] for per in data_dict.items()]
+
+	for key in  data_dict[data_dict.keys()[0]].keys():
+		my_data[key] = [0 if per[1][key]=='NaN' else per[1][key] for per in data_dict.items()]		
 
 	#identify outliers and remove them by forcing to 0. can't pop them without screwin up the index:
 	for key in my_data.iterkeys():
@@ -234,7 +228,7 @@ params={ 'kernel': ['rbf', 'sigmoid'], 'C':range(1,20000, 10)	}
 features = preprocessing.scale(features)
 
 
-clf= GridSearchCV(SVC(kernel='rbf'), param_grid=params, scoring='average_precision', n_jobs=4)
+clf= GridSearchCV(SVC(), param_grid=params, scoring='average_precision', n_jobs=4)
 t0 = time()
 clf.fit(features_train, labels_train)
 print 'Grid search SVM took: ', round(time()-t0, 3), 's'
