@@ -34,6 +34,29 @@ def printDataStats(data_dict):
 		'email_address'
 		'from_poi_to_this_person'
 	'''
+def printNonZeroPoints(data_dict):
+	featureCount =0
+	nanCount =0
+	for key in data_dict.keys():
+		for k,v in data_dict[key].items():
+			if v!='NaN':
+				featureCount+=1
+			else:
+				nanCount+=1
+
+	print "Total number of valid data points: ", featureCount
+	print "Total number of invalid datapoints: ", nanCount
+
+def printNumPOI(data_dict):
+	poiCount=0
+
+	for key in data_dict.keys():
+		for k,v in data_dict[key].items():
+			if k =='poi':
+				if v==1:
+					poiCount+=1
+
+	print "Total number of POIs in the data points: ", poiCount
 	
 def plotDataPoints(data_dict, x_key, y_key, title=None):
 	print x_key
@@ -44,5 +67,5 @@ def plotDataPoints(data_dict, x_key, y_key, title=None):
 	if title==None:
 		title = x_key+' vs '+y_key
 	matplotlib.pyplot.title(title)
-	matplotlib.pyplot.show()
+	#matplotlib.pyplot.show()
 

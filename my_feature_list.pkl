@@ -7,14 +7,13 @@ aS'total_payments'
 p3
 aS'bonus'
 p4
-aS'restricted_stock_deferred'
+aS'exercised_stock_options'
 p5
 aS'from_poi_frac'
 p6
 aS'to_poi_frac'
 p7
-aS'exercised_stock_options'
-p8
+ag5
 aS'long_term_incentive'
-p9
+p8
 a.

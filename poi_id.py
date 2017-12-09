@@ -19,13 +19,16 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.grid_search import GridSearchCV
 from sklearn.svm import SVC
 from sklearn import preprocessing
+from data_eda import edaPreWork
 
 
+
+edaPreWork()
 
 ### Task 1: Select what features you'll use.
 ### features_list is a list of strings, each of which is a feature name.
 ### The first feature must be "poi".
-features_list = ['poi', 'salary', 'total_payments', 'bonus', 'restricted_stock_deferred',  'from_poi_frac', 'to_poi_frac',	'exercised_stock_options', 'long_term_incentive' ] # You will need to use more features
+features_list = ['poi', 'salary', 'total_payments', 'bonus', 'exercised_stock_options',  'from_poi_frac', 'to_poi_frac',	'exercised_stock_options', 'long_term_incentive' ] # You will need to use more features
 
 ### Load the dictionary containing the dataset
 with open("final_project_dataset.pkl", "r") as data_file:
@@ -111,6 +114,7 @@ clfs = {'classifier':{}, 'result':{}, 'params':{}}
 clfs['classifier']['Niaeve Bayes'] = GaussianNB()
 clfs['classifier']['Decision Tree'] = DecisionTreeClassifier()
 clfs['classifier']['SVC'] = SVC()
+clfs['classifier']['Adaboost'] = AdaBoostClassifier()
 max_score = 0.0
 
 for clf_key in clfs['classifier'].iterkeys():
@@ -134,8 +138,6 @@ print "Max classifier:"
 max_classifier_key = max(clfs['result'].iteritems(), key=operator.itemgetter(1))[0]
 print max_classifier_key
 clf = clfs['classifier'][max_classifier_key]
-
-
 test_classifier(clf, features, labels, 1000)
 
 test_classifier(clfs['classifier']['Decision Tree'], features, labels, 1000)
@@ -153,7 +155,7 @@ features_train, features_test, labels_train, labels_test = \
 	train_test_split(features, labels, test_size=0.3, random_state=42)
 
 
-params = {'min_samples_leaf':range(1, 20), 'max_depth':range(1, 20), 'class_weight':['balanced'], 'criterion':['gini', 'entropy']}
+params = {'min_samples_leaf':range(1, 20,1), 'max_depth':range(1, 20,1) }#,  'class_weight':['balanced', 'none'], 'criterion':['gini', 'entropy']}
 
 clf = GridSearchCV(DecisionTreeClassifier(), param_grid=params, scoring='average_precision', cv=10, n_jobs=4)
 t0 = time()
@@ -161,13 +163,11 @@ clf.fit(features_train, labels_train)
 print 'Grid  Decision Tree search took: ', round(time()-t0, 3), 's'
 print clf.best_params_
 
-#params={ 'kernel': ('linear', 'poly', 'rbf', 'sigmoid', 'precomputed'), 'C':range(1,20000, 1000)	} #params too broad doens't finish runing single threaded
 
-params={ 'kernel': ['rbf', 'sigmoid'], 'C':range(1,20000, 10)	}
-
+params={ 'kernel': ['rbf', 'sigmoid'], 'C':range(5,20000, 10),	}
 features = preprocessing.scale(features)
-
-
+features_train, features_test, labels_train, labels_test = \
+	train_test_split(features, labels, test_size=0.3, random_state=42)
 clf= GridSearchCV(SVC(), param_grid=params, scoring='average_precision', n_jobs=4)
 t0 = time()
 clf.fit(features_train, labels_train)
@@ -177,8 +177,8 @@ print clf.best_params_
 
 print "Parameter tuning comparision round 2"
 clfs = {'classifier':{}, 'result':{}, 'params':{}}
-clfs['classifier']['Decision Tree'] = DecisionTreeClassifier(min_samples_leaf= 17, criterion='gini', max_depth=2, class_weight='balanced')
-clfs['classifier']['SVC'] = SVC(kernel='sigmoid', C=1)
+clfs['classifier']['Decision Tree'] = DecisionTreeClassifier(min_samples_leaf= 10, criterion='gini', max_depth=2, class_weight='balanced')
+clfs['classifier']['SVC'] = SVC(kernel='sigmoid', C=200)
 
 
 
@@ -203,10 +203,11 @@ print "Max classifier:"
 max_classifier_key = max(clfs['result'].iteritems(), key=operator.itemgetter(1))[0]
 print max_classifier_key
 
-print 'Grid Search for AAdaboost  one'
+print 'Grid Search for AAdaboosted Decision Tree  calssifier'
 #params={ 'n_estimators': range(1,600, 1), 'learning_rate':np.arange(.1,1, .1)	}
 params={ 'n_estimators': range(100,200, 10), 'learning_rate':np.arange(.1,.3, .1)	}
-clf= GridSearchCV( AdaBoostClassifier(DecisionTreeClassifier(min_samples_leaf= 17, criterion='gini', max_depth=2, class_weight='balanced')), param_grid=params, scoring='f1', n_jobs=4)
+#clf= GridSearchCV( AdaBoostClassifier(DecisionTreeClassifier(min_samples_leaf= 17, criterion='gini', max_depth=2, class_weight='balanced')), param_grid=params, scoring='f1', n_jobs=4)
+clf= GridSearchCV( AdaBoostClassifier(DecisionTreeClassifier(min_samples_leaf= 2,  max_depth=1, class_weight='balanced')), param_grid=params, scoring='f1', n_jobs=4)
 t0 = time()
 clf.fit(features_train, labels_train)
 print 'Optimized  Adaboost took: ', round(time()-t0, 3), 's'
@@ -224,12 +225,16 @@ print 'Prediction took: ', round(time()-t0, 3), 's'
 
 t0 = time()
 score =clf.score(features_test, labels_test)
-
 print 'Scoring took: ', round(time()-t0, 3), 's'
 print 'Accuracy of : ', score
 
+print "test fuctions for top 2 classifiers"
+print 'Adaboosed Decision Tree'
 test_classifier(clf, features, labels, 1000)
 
+print 'SVM'
+clf = SVC(kernel='sigmoid', C=200)
+test_classifier(clf, features, labels, 1000)
 
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
 ### check your results. You do not need to change anything below, but make sure

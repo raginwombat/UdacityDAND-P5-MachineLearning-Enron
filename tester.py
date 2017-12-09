@@ -24,9 +24,10 @@ RESULTS_FORMAT_STRING = "\tTotal predictions: {:4d}\tTrue positives: {:4d}\tFals
 
 #def test_classifier(clf, dataset, feature_list, folds = 1000):
 def test_classifier(clf, features, labels, folds):
+    
     #data = featureFormat(dataset, feature_list, sort_keys = True)
     
-    #don't need #labels, features = targetFeatureSplit(data)
+    #labels, features = targetFeatureSplit(data)
 
     cv = StratifiedShuffleSplit(labels, folds, random_state = 42)
     true_negatives = 0
