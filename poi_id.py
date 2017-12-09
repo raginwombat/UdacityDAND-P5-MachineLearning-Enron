@@ -20,10 +20,10 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.svm import SVC
 from sklearn import preprocessing
 from data_eda import edaPreWork
+from helper import *
 
-
-
-edaPreWork()
+#Un comment beofre grading
+#edaPreWork()
 
 ### Task 1: Select what features you'll use.
 ### features_list is a list of strings, each of which is a feature name.
@@ -40,7 +40,8 @@ with open("final_project_dataset.pkl", "r") as data_file:
 
 #build data dict
 
-	my_data={}
+	my_dict = cleanDict(data_dict)
+	'''
 	my_data['name'] = [per[0] for per in data_dict.items()]
 
 	for key in  data_dict[data_dict.keys()[0]].keys():
@@ -54,7 +55,8 @@ with open("final_project_dataset.pkl", "r") as data_file:
 			for v in  sorted(my_data[key], reverse=True)[:cutoff]:
 				#print my_data[key].index(v)
 				my_data[key][my_data[key].index(v) ] = 0
-		
+	'''	
+	cleanted_data = removeOutlier(my_dict, .05)
 		
 ### Task 3: Create new feature(s)
 #new feature will be % of messages to POI and From POI
