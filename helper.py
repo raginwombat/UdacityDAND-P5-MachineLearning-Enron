@@ -6,6 +6,7 @@
 '''
 import matplotlib.pyplot
 from collections import defaultdict
+import numpy as np
 
 def printDataStats(data_dict):
 	print "Check how many people are in the dataset: ", len(data_dict)
@@ -76,47 +77,41 @@ def cleanDict(data_dict):
 	#iterate over people
 	for k_per, v_per in cleaned_dict.items():
 		#iterate over features
-		if k_per != "TOTAL":
-			for k in v_per.keys():
-				if k != 'poi' and k!='email_addres':
-					if v_per[k] == 'NaN':
-						v_per[k] =0
+		for k in v_per.keys():
+			if k != 'poi' and k!='email_addres':
+				if v_per[k] == 'NaN':
+					v_per[k] =0
+		if k_per == 'TOTAL':
+			del cleaned_dict['TOTAL']
 	return cleaned_dict
 
-def removeOutlier(data_dict, cutoff):
+def removeOutlier(data_dict):
 	''' This method assumes all of the data is complete or will throw and index error
+		This  method writes 0's to the top 
 	'''
-	#print data_dict.keys()
-	#print data_dict.items()[0][1].keys()
+
 	feats = data_dict.items()[0][1].keys()
-	#print feat
-	#feat_dic= collections.defaultdict(list(dict()))
-	#feat_dic= {'feat':[{'person':'value'}]}
 	feat_dic= {feat: {} for feat in feats}
 
 	#Extract values from data dict
 	for feat in feats:
-		#print "Current feat"
-		#print feat
 		if feat != 'email_address':
-			for per in data_dict.keys():
-				#print per
-				#print data_dict[per][feat]
-				#hack to initilize the data structure
-				#feat_dic[feat]=[{"test":0}]
-				#feat_dic[feat][per] = 0
-				#feat_dic[feat].append({per:data_dict[per][feat]})
-			
+			for per in data_dict.keys():		
 				feat_dic[feat][per] =data_dict[per][feat]
 
 	for feat in feats:
-		cutoff = int(round(len(feat_dic[feat]) *.05))
+		if feat !='email_address' and feat != 'name':
+			print feat
+			avg = np.mean(feat_dic[feat].values() )
+			sd = np.std(feat_dic[feat].values() )
 
-		print 'For ', feat, ' ',cutoff, ' features out of ', len(feat_dic[feat]),' were cut' 
+			for per in data_dict.keys():		
+				if abs(data_dict[per][feat]-avg) > sd:
+					print 'removing val. Per: ', per, ' feat',feat, ' val: ',data_dict[per][feat], ' sd: ', sd
+					data_dict[per][feat]= 0 
 
-		for k,v in sorted(feat_dic[feat].iteritems(), reverse=True, key=lambda (k,v): (v, k))[:cutoff]:
-			data_dict[k][feat]=0
+			#for k,v in sorted(feat_dic[feat].iteritems(), reverse=True, key=lambda (k,v): (v, k))[:cutoff]:
+				#data_dict[k][feat]=0
 
-		break
-		print feat_dic[feat]
+	return data_dict
 

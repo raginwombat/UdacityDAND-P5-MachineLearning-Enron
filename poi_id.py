@@ -51,12 +51,12 @@ with open("final_project_dataset.pkl", "r") as data_file:
 	for key in my_data.iterkeys():
 		cutoff = int(round(len(my_data[key]) *.05))
 		#print  "removing top ", cutoff,"outliers for ", key
-		if key!='poi':
+		if key!='poi':if val>sd then data_dict[val.key()][feat] =0
 			for v in  sorted(my_data[key], reverse=True)[:cutoff]:
 				#print my_data[key].index(v)
 				my_data[key][my_data[key].index(v) ] = 0
 	'''	
-	cleanted_data = removeOutlier(my_dict, .05)
+	cleaned = removeOutlier(my_dict)
 		
 ### Task 3: Create new feature(s)
 #new feature will be % of messages to POI and From POI
