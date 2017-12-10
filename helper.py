@@ -7,6 +7,7 @@
 import matplotlib.pyplot
 from collections import defaultdict
 import numpy as np
+from time import time
 
 def printDataStats(data_dict):
 	print "Check how many people are in the dataset: ", len(data_dict)
@@ -95,19 +96,19 @@ def removeOutlier(data_dict):
 
 	#Extract values from data dict
 	for feat in feats:
-		if feat != 'email_address':
+		if feat != 'email_address' and feat!='poi':
 			for per in data_dict.keys():		
 				feat_dic[feat][per] =data_dict[per][feat]
 
 	for feat in feats:
 		if feat !='email_address' and feat != 'name':
-			print feat
+			#print feat
 			avg = np.mean(feat_dic[feat].values() )
 			sd = np.std(feat_dic[feat].values() )
 
 			for per in data_dict.keys():		
 				if abs(data_dict[per][feat]-avg) > sd:
-					print 'removing val. Per: ', per, ' feat',feat, ' val: ',data_dict[per][feat], ' sd: ', sd
+					#print 'removing val. Per: ', per, ' feat',feat, ' val: ',data_dict[per][feat], ' sd: ', sd
 					data_dict[per][feat]= 0 
 
 			#for k,v in sorted(feat_dic[feat].iteritems(), reverse=True, key=lambda (k,v): (v, k))[:cutoff]:
@@ -115,3 +116,20 @@ def removeOutlier(data_dict):
 
 	return data_dict
 
+
+def classifierrun(clf, features_train, features_test, labels_train, labels_test):
+
+	t0 = time()
+	clf.fit(features_train, labels_train)
+	print 'Fit took: ', round(time()-t0, 3), 's'
+
+	t0 = time()
+	pred= clf.predict(features_test)
+	print 'Prediction took: ', round(time()-t0, 3), 's'
+
+	t0 = time()
+	score =clf.score(features_test, labels_test)
+
+	print 'Scoring took: ', round(time()-t0, 3), 's'
+	print 'Accuracy of : ', score
+	return score
