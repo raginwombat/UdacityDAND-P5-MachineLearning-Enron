@@ -33,3 +33,6 @@
 *  https://stackoverflow.com/questions/40751455/running-sklearn-linear-regression-getting-arrays-with-inconsistent-numbers-of
 *  https://stackoverflow.com/questions/32580489/python-for-and-if-on-one-line
 *  https://stackoverflow.com/questions/20145902/how-to-extract-dictionary-single-key-value-pair-in-variables
+*  https://chrisalbon.com/machine-learning/anova_f-value_for_feature_selection.html
+*  https://docs.python.org/2/library/functions.html#zip
+*  https://datascience.stackexchange.com/questions/12321/difference-between-fit-and-fit-transform-in-scikit-learn-models

@@ -9,6 +9,7 @@ from collections import defaultdict
 import numpy as np
 from time import time
 
+
 def printDataStats(data_dict):
 	print "Check how many people are in the dataset: ", len(data_dict)
 	print "check what data is available for each person: "
