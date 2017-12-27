@@ -33,6 +33,10 @@ from sklearn.linear_model import LogisticRegression
 #feature seelction
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import f_classif
+from sklearn.cross_validation  import StratifiedShuffleSplit
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.metrics import accuracy_score, precision_score, recall_score
 
 #Un comment beofre grading
 #edaPreWork()
@@ -116,13 +120,69 @@ features_train, features_test, labels_train, labels_test = \
 	train_test_split(features, labels, test_size=0.4, random_state=42)
 
 
+print "RF test"
+cv = StratifiedShuffleSplit(labels_train, n_iter=10, test_size=0.33, random_state=42)
+
+
+#test_classifier(RandomForestClassifier(max_features='sqrt', n_estimators = 10, max_depth=2, min_samples_leaf=1), my_dataset, features_list, 1000)
+#test_classifier(RandomForestClassifier( n_estimators = 10, max_depth=2, min_samples_leaf=1), my_dataset, features_list, 1000)
+print "hacky  shit"
+print "logitiscal regression"
+params  =	{'tol':[10**-10, 10**-20], 'C': [0.01, 0.05, 0.5, 1, 10, 10**2,10**5,10**10, 10**20], \
+								'class_weight':['balanced']}
+clf = GridSearchCV( LogisticRegression(), param_grid=params, scoring='recall', n_jobs=4, cv= cv)
+clf.fit(features_train, labels_train)
+print "--Best params: ", clf.best_params_								
+
+#test_classifier(clf, my_dataset, features_list, 1000)
+def evaluate_clf(clf, features, labels, num_iters=1000, test_size=0.3):
+    print clf
+    accuracy = []
+    precision = []
+    recall = []
+    first = True
+    for trial in range(num_iters):
+        features_train, features_test, labels_train, labels_test =\
+            train_test_split(features, labels, test_size=test_size)
+        clf.fit(features_train, labels_train)
+        predictions = clf.predict(features_test)
+        accuracy.append(accuracy_score(labels_test, predictions))
+        precision.append(precision_score(labels_test, predictions))
+        recall.append(recall_score(labels_test, predictions))
+        if trial % 10 == 0:
+            if first:
+                sys.stdout.write('\nProcessing')
+            sys.stdout.write('.')
+            sys.stdout.flush()
+            first = False
+
+    print "done.\n"
+    print "precision: {}".format(mean(precision))
+    print "recall:    {}".format(mean(recall))
+    return mean(precision), mean(recall)
+
+
+	
+scaler = StandardScaler()
+pca = PCA()
+clf = AdaBoostClassifier(RandomForestClassifier(), n_estimators=150, learning_rate=0.20000000000000001)
+pipe = Pipeline(steps=[('scale',scaler), ('pca',pca), ('classifier', clf)])
+params = { 'pca__n_components' : range(2, 6,1) }
+gscv = GridSearchCV(pipe,  param_grid=params, scoring='recall', n_jobs=4, cv=cv)
+gscv.fit(features, labels)
+print 'best params = ', gscv.best_params_
+evaluate_clf(gscv.best_estimator_, features, labels)
+
+pred = gscv.predict(features_test)
+print gs
+
 #create dict for diff classifiers
 clfs = {'classifier':{}, 'result':{}, 'params':{}}
 clfs['classifier']['Niaeve Bayes'] = GaussianNB()
 clfs['classifier']['Decision Tree'] = DecisionTreeClassifier()
 clfs['classifier']['LinearSVC'] = LinearSVC()
 clfs['classifier']['Adaboost'] = AdaBoostClassifier(n_estimators=13, learning_rate=1)
-clfs['classifier']['RandomForest'] = RandomForestClassifier()
+clfs['classifier']['RandomForest'] = RandomForestClassifier(max_features='sqrt', n_estimators = 10, max_depth=2, min_samples_leaf=1)
 clfs['classifier']['KNeighbors'] = KNeighborsClassifier()
 clfs['classifier']['LogisticRegression'] = LogisticRegression()
 
@@ -137,8 +197,9 @@ print "Max classifier:"
 max_classifier_key = max(clfs['result'].iteritems(), key=operator.itemgetter(1))[0]
 print max_classifier_key
 
-clf = clfs['classifier'][max_classifier_key]
+
 test_classifier(clf, my_dataset, features_list, 1000)
+
 
 
 ### Task 5: Tune your classifier to achieve better than .3 precision and recall 
@@ -155,17 +216,20 @@ features_train, features_test, labels_train, labels_test = \
 	train_test_split(features, labels, test_size=0.3, random_state=42)
 
 
-scorer=  {'precision': 'precision', 'recall': 'recall'}
+#scorer=  {'precision': 'precision', 'recall': 'recall'}
 
-tune_clfs = {'classifier':{}, 'result':{}, 'params':{}}
+
+tune_clfs = {'classifier':{}, 'result':{}, 'params':{}, 'tuned_params':{}}
 tune_clfs['classifier']['Decision Tree'] = ( DecisionTreeClassifier(), \
 							{'min_samples_leaf':range(1, 20,1), 'max_depth':range(1, 20,1) })
 
 tune_clfs['classifier']['LinearSVC'] = ( LinearSVC(), \
-						{'C':range(5,20000, 10),	})
+						{'C':range(5,20000, 100),	})
 
 tune_clfs['classifier']['RandomForest'] = (RandomForestClassifier(), \
-						 { 'n_estimators': range(10,400,50), 'max_features': ['sqrt', 'log2'], 'min_samples_leaf':range(1, 20,1), 'max_depth':range(1, 20,1) })
+						 { 'n_estimators': ['None'] +range(10,400,100), 'max_features': ['sqrt'], 'min_samples_leaf':range(1, 5,1), 'max_depth':range(1, 5,1) })
+
+						# { 'n_estimators': range(10,400,100), 'max_features': ['sqrt', 'log2'], 'min_samples_leaf':range(1, 20,1), 'max_depth':range(1, 20,1) })
 
 tune_clfs['classifier']['AdaboostRFC'] =( AdaBoostClassifier(RandomForestClassifier(), n_estimators=13, learning_rate=1), \
 						{ 'n_estimators': range(100,200, 10), 'learning_rate':np.arange(.1,.3, .1)	})
@@ -182,31 +246,21 @@ tune_clfs['classifier']['LogisticRegression'] = (LogisticRegression(), \
         
 
 for clf_name in tune_clfs['classifier'].keys():
-	print "#Tuning params for: ", clf_name
+	print '\n #Tuning params for: ', clf_name
 	clf_base, params = tune_clfs['classifier'][clf_name]
 
 	clf = GridSearchCV( clf_base, param_grid=params, scoring='recall', n_jobs=4)
 	
 	tune_clfs['result'][clf_name] = classifierrun(clf,  features_train, features_test, labels_train, labels_test)
+	tune_clfs['tuned_params'][clf_name] = clf.best_params_
 	print "--Best params: ", clf.best_params_	
-	test_classifier(clf, my_dataset, features_list, 1000)
+	#test_classifier(clf, my_dataset, features_list, 1000)
 
 print "Max classifier:"
 max_classifier_key = max(tune_clfs['result'].iteritems(), key=operator.itemgetter(1))[0]
 print max_classifier_key
-print 'Best parms:'
-tune_clfs['classifier'][max_classifier_key].best_params_
-
-
-t0 = time()
-tuning_parameters = {'n_estimators': [20,50,100], 'min_samples_split': [1,2,4], 'max_features': [1,2,3]}
-print("# Tuning hyper-parameters for recall")
-RF = GridSearchCV(RandomForestClassifier(), tuning_parameters,  scoring = scorer, n_jobs=4)
-RF.fit(features, labels)
-print("Best parameters are:")
-print(RF.best_params_)
-print "tunning time: {0}".format(round(time()-t0, 3))
-d
+print 'Best parms:', tune_clfs['tuned_params'][max_classifier_key]
+#tune_clfs['classifier'][max_classifier_key].best_params_
 
 
 
