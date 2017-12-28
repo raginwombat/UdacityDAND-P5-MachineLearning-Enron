@@ -8,6 +8,7 @@ import matplotlib.pyplot
 from collections import defaultdict
 import numpy as np
 from time import time
+from sklearn.metrics import precision_recall_fscore_support
 
 
 def printDataStats(data_dict):
@@ -129,7 +130,7 @@ def classifierrun(clf, features_train, features_test, labels_train, labels_test)
 	print 'Prediction took: ', round(time()-t0, 3), 's'
 
 	t0 = time()
-	score =clf.score(features_test, labels_test)
+	score =precision_recall_fscore_support( labels_test, pred, average='binary' )
 
 	print 'Scoring took: ', round(time()-t0, 3), 's'
 	print 'Accuracy of : ', score

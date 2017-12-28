@@ -37,3 +37,5 @@
 *  https://docs.python.org/2/library/functions.html#zip
 *  https://datascience.stackexchange.com/questions/12321/difference-between-fit-and-fit-transform-in-scikit-learn-models
 *  https://chrisalbon.com/machine-learning/anova_f-value_for_feature_selection.html
+*  http://scikit-learn.org/stable/auto_examples/plot_digits_pipe.html
+*  https://stackoverflow.com/questions/43856280/return-coefficients-from-pipeline-object-in-sklearn

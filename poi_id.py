@@ -36,7 +36,7 @@ from sklearn.feature_selection import f_classif
 from sklearn.cross_validation  import StratifiedShuffleSplit
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from sklearn.metrics import accuracy_score, precision_score, recall_score
+from sklearn.metrics import precision_recall_fscore_support, accuracy_score, precision_score, recall_score
 
 #Un comment beofre grading
 #edaPreWork()
@@ -94,14 +94,17 @@ data = featureFormat(my_dataset, features_list, sort_keys = True)
 labels, features = targetFeatureSplit(data)
 
 #figure out what the top k features are that match the labels
-k=10
+k='all'
 skb = SelectKBest(f_classif, k=k)
 skb.fit(features, labels)
 scores = skb.scores_
 
-print 'Top features are: ', zip(*sorted(zip(features_list, scores), reverse=True, key=lambda x: x[1]))[0][:k]
-print type (zip(*sorted(zip(features_list, scores), reverse=True, key=lambda x: x[1]))[0][:k])
-features_list =  ['poi'] + list( zip(*sorted(zip(features_list, scores), reverse=True, key=lambda x: x[1]))[0][:k])
+#new if then statement syntax
+cutoff= (k, len(features_list)-1 )[k=='all'] 
+print cutoff
+print 'Top features are: ', zip(*sorted(zip(features_list, scores), reverse=True, key=lambda x: x[1]))[0][:cutoff]
+print type (zip(*sorted(zip(features_list, scores), reverse=True, key=lambda x: x[1]))[0][:cutoff])
+features_list =  ['poi'] + list( zip(*sorted(zip(features_list, scores), reverse=True, key=lambda x: x[1]))[0][:cutoff])
 
 data = featureFormat(my_dataset, features_list, sort_keys = True)
 labels, features = targetFeatureSplit(data)
@@ -120,69 +123,14 @@ features_train, features_test, labels_train, labels_test = \
 	train_test_split(features, labels, test_size=0.4, random_state=42)
 
 
-print "RF test"
-cv = StratifiedShuffleSplit(labels_train, n_iter=10, test_size=0.33, random_state=42)
-
-
-#test_classifier(RandomForestClassifier(max_features='sqrt', n_estimators = 10, max_depth=2, min_samples_leaf=1), my_dataset, features_list, 1000)
-#test_classifier(RandomForestClassifier( n_estimators = 10, max_depth=2, min_samples_leaf=1), my_dataset, features_list, 1000)
-print "hacky  shit"
-print "logitiscal regression"
-params  =	{'tol':[10**-10, 10**-20], 'C': [0.01, 0.05, 0.5, 1, 10, 10**2,10**5,10**10, 10**20], \
-								'class_weight':['balanced']}
-clf = GridSearchCV( LogisticRegression(), param_grid=params, scoring='recall', n_jobs=4, cv= cv)
-clf.fit(features_train, labels_train)
-print "--Best params: ", clf.best_params_								
-
-#test_classifier(clf, my_dataset, features_list, 1000)
-def evaluate_clf(clf, features, labels, num_iters=1000, test_size=0.3):
-    print clf
-    accuracy = []
-    precision = []
-    recall = []
-    first = True
-    for trial in range(num_iters):
-        features_train, features_test, labels_train, labels_test =\
-            train_test_split(features, labels, test_size=test_size)
-        clf.fit(features_train, labels_train)
-        predictions = clf.predict(features_test)
-        accuracy.append(accuracy_score(labels_test, predictions))
-        precision.append(precision_score(labels_test, predictions))
-        recall.append(recall_score(labels_test, predictions))
-        if trial % 10 == 0:
-            if first:
-                sys.stdout.write('\nProcessing')
-            sys.stdout.write('.')
-            sys.stdout.flush()
-            first = False
-
-    print "done.\n"
-    print "precision: {}".format(mean(precision))
-    print "recall:    {}".format(mean(recall))
-    return mean(precision), mean(recall)
-
-
-	
-scaler = StandardScaler()
-pca = PCA()
-clf = AdaBoostClassifier(RandomForestClassifier(), n_estimators=150, learning_rate=0.20000000000000001)
-pipe = Pipeline(steps=[('scale',scaler), ('pca',pca), ('classifier', clf)])
-params = { 'pca__n_components' : range(2, 6,1) }
-gscv = GridSearchCV(pipe,  param_grid=params, scoring='recall', n_jobs=4, cv=cv)
-gscv.fit(features, labels)
-print 'best params = ', gscv.best_params_
-evaluate_clf(gscv.best_estimator_, features, labels)
-
-pred = gscv.predict(features_test)
-print gs
 
 #create dict for diff classifiers
 clfs = {'classifier':{}, 'result':{}, 'params':{}}
 clfs['classifier']['Niaeve Bayes'] = GaussianNB()
 clfs['classifier']['Decision Tree'] = DecisionTreeClassifier()
 clfs['classifier']['LinearSVC'] = LinearSVC()
-clfs['classifier']['Adaboost'] = AdaBoostClassifier(n_estimators=13, learning_rate=1)
-clfs['classifier']['RandomForest'] = RandomForestClassifier(max_features='sqrt', n_estimators = 10, max_depth=2, min_samples_leaf=1)
+clfs['classifier']['Adaboost'] = AdaBoostClassifier()
+clfs['classifier']['RandomForest'] = RandomForestClassifier()
 clfs['classifier']['KNeighbors'] = KNeighborsClassifier()
 clfs['classifier']['LogisticRegression'] = LogisticRegression()
 
@@ -198,7 +146,7 @@ max_classifier_key = max(clfs['result'].iteritems(), key=operator.itemgetter(1))
 print max_classifier_key
 
 
-test_classifier(clf, my_dataset, features_list, 1000)
+test_classifier(clfs['classifier'][max_classifier_key], my_dataset, features_list, 1000)
 
 
 
@@ -217,88 +165,66 @@ features_train, features_test, labels_train, labels_test = \
 
 
 #scorer=  {'precision': 'precision', 'recall': 'recall'}
-
+print "Base Classifier Tuning for use in pipeline or adaboosting later"
 
 tune_clfs = {'classifier':{}, 'result':{}, 'params':{}, 'tuned_params':{}}
-tune_clfs['classifier']['Decision Tree'] = ( DecisionTreeClassifier(), \
-							{'min_samples_leaf':range(1, 20,1), 'max_depth':range(1, 20,1) })
+tune_clfs['classifier']['DecisionTreeClassifier'] = ( DecisionTreeClassifier(), \
+							{'classifier__min_samples_leaf':range(1, 20,1), 'classifier__max_depth':range(1, 20,1) })
 
 tune_clfs['classifier']['LinearSVC'] = ( LinearSVC(), \
-						{'C':range(5,20000, 100),	})
+						{'classifier__C':range(5,20000, 100),	})
 
 tune_clfs['classifier']['RandomForest'] = (RandomForestClassifier(), \
-						 { 'n_estimators': ['None'] +range(10,400,100), 'max_features': ['sqrt'], 'min_samples_leaf':range(1, 5,1), 'max_depth':range(1, 5,1) })
+						 { 'classifier__n_estimators':range(10,400,100), 'classifier__min_samples_leaf':range(1, 5,1), 'classifier__max_depth':range(1, 5,1) })
 
 						# { 'n_estimators': range(10,400,100), 'max_features': ['sqrt', 'log2'], 'min_samples_leaf':range(1, 20,1), 'max_depth':range(1, 20,1) })
 
-tune_clfs['classifier']['AdaboostRFC'] =( AdaBoostClassifier(RandomForestClassifier(), n_estimators=13, learning_rate=1), \
-						{ 'n_estimators': range(100,200, 10), 'learning_rate':np.arange(.1,.3, .1)	})
-
-tune_clfs['classifier']['AdaboostDTC']=(AdaBoostClassifier(DecisionTreeClassifier(), n_estimators=13, learning_rate=1), \
-						{ 'n_estimators': range(100,200, 10), 'learning_rate':np.arange(.1,.3, .1)	})
-
-tune_clfs['classifier']['Adaboost'] = (AdaBoostClassifier(n_estimators=13, learning_rate=1), \
-						{ 'n_estimators': range(10,200, 10), 'learning_rate':np.arange(.1,1, .1)})
-
 tune_clfs['classifier']['LogisticRegression'] = (LogisticRegression(), \
-						{'tol':[10**-10, 10**-20], 'C': [0.05, 0.5, 1, 10, 10**2,10**5,10**10, 10**20], \
-								'class_weight':['balanced']})
-        
+						{'classifier__tol':[10**-10, 10**-20], 'classifier__C': [0.05, 0.5, 1, 10, 10**2,10**5,10**10, 10**20] })
+
+
+
+cv = StratifiedShuffleSplit(labels_train, n_iter=10, test_size=0.33, random_state=42)
+scaler = StandardScaler()
+pca = PCA()
+#clf = AdaBoostClassifier(RandomForestClassifier(), n_estimators=150, learning_rate=0.20000000000000001)
+
 
 for clf_name in tune_clfs['classifier'].keys():
 	print '\n #Tuning params for: ', clf_name
 	clf_base, params = tune_clfs['classifier'][clf_name]
-
-	clf = GridSearchCV( clf_base, param_grid=params, scoring='recall', n_jobs=4)
+	#clf_base =  LinearSVC() #tune_clfs['classifier'][clf_name]
+	pipe = Pipeline(steps=[('scale',scaler), ('pca',pca), ('classifier', clf_base)])
+	params['pca__n_components']= range(1,len(features_list), 1)
+	#print "params: ", params
+	grid = GridSearchCV( pipe, param_grid=params,  n_jobs=4, cv=cv, scoring = 'recall', refit=True)
 	
-	tune_clfs['result'][clf_name] = classifierrun(clf,  features_train, features_test, labels_train, labels_test)
-	tune_clfs['tuned_params'][clf_name] = clf.best_params_
-	print "--Best params: ", clf.best_params_	
+	#print "param keys:"
+	#print grid.get_params().keys()
+	print " --Fitting"
+	grid.fit(features, labels)
+	clf = grid.best_estimator_
+	pred= clf.predict(features_test)
+	tune_clfs['result'][clf_name] =  precision_recall_fscore_support(labels_test, pred, average='binary')# classifierrun(clf,  features_train, features_test, labels_train, labels_test)
+	print tune_clfs['result'][clf_name]
+	#remove below
+	tune_clfs['tuned_params'][clf_name] = grid.best_params_
+	print "--Best params: ", grid.best_params_	
 	#test_classifier(clf, my_dataset, features_list, 1000)
+	tune_clfs['classifier'][clf_name] = clf
+	
+	print " --#Precsision recall fscore"
+	print precision_recall_fscore_support(labels_test, pred, average='binary')
+	
 
-print "Max classifier:"
+print "\n\n##Max classifier:"
 max_classifier_key = max(tune_clfs['result'].iteritems(), key=operator.itemgetter(1))[0]
 print max_classifier_key
-print 'Best parms:', tune_clfs['tuned_params'][max_classifier_key]
-#tune_clfs['classifier'][max_classifier_key].best_params_
+print '#Best parms:', tune_clfs['tuned_params'][max_classifier_key]
 
+test_classifier(tune_clfs['classifier'][max_classifier_key], my_dataset, features_list, 1000)
 
-
-print "Parameter tuning comparision round 2"
-clfs = {'classifier':{}, 'result':{}, 'params':{}}
-clfs['classifier']['Decision Tree'] = DecisionTreeClassifier(min_samples_leaf= 1, criterion='gini', max_depth=3, class_weight='balanced')
-clfs['classifier']['LinearSVC'] = LinearSVC( C=17385)
-
-
-print 'Grid Search for AAdaboosted Decision Tree  calssifier'
-
-params={ 'n_estimators': range(100,200, 10), 'learning_rate':np.arange(.1,.3, .1)	}
-
-clf= GridSearchCV( AdaBoostClassifier(DecisionTreeClassifier(min_samples_leaf= 4,  max_depth=9, class_weight='balanced')), param_grid=params, scoring='average_precision', n_jobs=4)
-t0 = time()
-clf.fit(features_train, labels_train)
-print 'Optimized  Adaboost took: ', round(time()-t0, 3), 's'
-print clf.best_params_
-
-clf = AdaBoostClassifier(DecisionTreeClassifier(min_samples_leaf= 4,  max_depth=9, criterion='gini',  class_weight='balanced'), n_estimators=142, learning_rate= 0.20000000000000001)
-classifierrun(clfs['classifier'][clf_key],  features_train, features_test, labels_train, labels_test)
-
-
-print "test fuctions for top 2 classifiers"
-print 'Adaboosed Decision Tree'
-test_classifier(clf, my_dataset, features_list,1000)
-
-#print 'SVM'
-#clf = LinearSVC(kernel='sigmoid', C=5)
-print 'RandomForestClassifier'
-clf = RandomForestClassifier(max_features = 3, min_samples_split = 4, n_estimators= 100)
-test_classifier(clf, my_dataset, features_list, 1000)
-
-
-print 'SVM'
-clf = LinearSVC( C=17385)
-print 'RandomForestClassifier'
-test_classifier(clf, my_dataset, features_list, 1000)
+clf = tune_clfs['tuned_params'][max_classifier_key]
 
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
 ### check your results. You do not need to change anything below, but make sure
