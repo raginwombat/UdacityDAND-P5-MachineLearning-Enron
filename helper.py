@@ -133,5 +133,5 @@ def classifierrun(clf, features_train, features_test, labels_train, labels_test)
 	score =precision_recall_fscore_support( labels_test, pred, average='binary' )
 
 	print 'Scoring took: ', round(time()-t0, 3), 's'
-	print 'Accuracy of : ', score
+	print '(precision, recall, fbeta_score, support) : ', score
 	return score
