@@ -94,16 +94,14 @@ data = featureFormat(my_dataset, features_list, sort_keys = True)
 labels, features = targetFeatureSplit(data)
 
 #figure out what the top k features are that match the labels
-k='all'
+k=17
 skb = SelectKBest(f_classif, k=k)
 skb.fit(features, labels)
 scores = skb.scores_
 
 #new if then statement syntax
 cutoff= (k, len(features_list)-1 )[k=='all'] 
-print cutoff
-print 'Top features are: ', zip(*sorted(zip(features_list, scores), reverse=True, key=lambda x: x[1]))[0][:cutoff]
-print type (zip(*sorted(zip(features_list, scores), reverse=True, key=lambda x: x[1]))[0][:cutoff])
+print '\n\n##Top features ',cutoff, ' are: ', zip(*sorted(zip(features_list, scores), reverse=True, key=lambda x: x[1]))[0][:cutoff]
 features_list =  ['poi'] + list( zip(*sorted(zip(features_list, scores), reverse=True, key=lambda x: x[1]))[0][:cutoff])
 
 data = featureFormat(my_dataset, features_list, sort_keys = True)
@@ -139,9 +137,14 @@ max_score = 0.0
 #Run through classfiers
 for clf_key in clfs['classifier'].iterkeys():
 	print '\nclassifer ', clf_key 
-	clfs['result'][clf_key] = classifierrun(clfs['classifier'][clf_key],  features_train, features_test, labels_train, labels_test)
+	scores = classifierrun(clfs['classifier'][clf_key],  features_train, features_test, labels_train, labels_test)
+	#Scoring is recall+precision
+	clfs['result'][clf_key] = scores[0]+scores[1]
 
-print "Max classifier:"
+print "\n##Classifier ranking:"
+print sorted(clfs['result'].iteritems(), key=lambda (k, v): (v,k), reverse=True)
+
+print "\n\n##Max classifier:"
 max_classifier_key = max(clfs['result'].iteritems(), key=operator.itemgetter(1))[0]
 print max_classifier_key
 
@@ -165,7 +168,7 @@ features_train, features_test, labels_train, labels_test = \
 
 
 #scorer=  {'precision': 'precision', 'recall': 'recall'}
-print "Base Classifier Tuning for use in pipeline or adaboosting later"
+print "Hyperparameter Tuning for use in pipeline"
 
 tune_clfs = {'classifier':{}, 'result':{}, 'params':{}, 'tuned_params':{}}
 tune_clfs['classifier']['DecisionTreeClassifier'] = ( DecisionTreeClassifier(), \
@@ -184,7 +187,8 @@ tune_clfs['classifier']['LogisticRegression'] = (LogisticRegression(), \
 
 
 
-cv = StratifiedShuffleSplit(labels_train, n_iter=10, test_size=0.33, random_state=42)
+cv = StratifiedShuffleSplit(labels, n_iter=10, test_size=0.33, random_state=42)
+#cv = StratifiedShuffleSplit(labels, 1000, random_state=42)
 scaler = StandardScaler()
 pca = PCA()
 #clf = AdaBoostClassifier(RandomForestClassifier(), n_estimators=150, learning_rate=0.20000000000000001)
@@ -205,7 +209,8 @@ for clf_name in tune_clfs['classifier'].keys():
 	grid.fit(features, labels)
 	clf = grid.best_estimator_
 	pred= clf.predict(features_test)
-	tune_clfs['result'][clf_name] =  precision_recall_fscore_support(labels_test, pred, average='binary')# classifierrun(clf,  features_train, features_test, labels_train, labels_test)
+	score  =  precision_recall_fscore_support(labels_test, pred, average='binary')# classifierrun(clf,  features_train, features_test, labels_train, labels_test)
+	tune_clfs['result'][clf_name] = score[0] +score[1]
 	print tune_clfs['result'][clf_name]
 	#remove below
 	tune_clfs['tuned_params'][clf_name] = grid.best_params_
@@ -217,12 +222,22 @@ for clf_name in tune_clfs['classifier'].keys():
 	print precision_recall_fscore_support(labels_test, pred, average='binary')
 	
 
+print "\n##Classifier ranking:"
+print sorted(clfs['result'].iteritems(), key=lambda (k, v): (v,k), reverse=True)
+
+
 print "\n\n##Max classifier:"
 max_classifier_key = max(tune_clfs['result'].iteritems(), key=operator.itemgetter(1))[0]
 print max_classifier_key
 print '#Best parms:', tune_clfs['tuned_params'][max_classifier_key]
 
 test_classifier(tune_clfs['classifier'][max_classifier_key], my_dataset, features_list, 1000)
+
+print "\n\n##2nd Max Classifier"
+clf_name = sorted(clfs['result'].iteritems(), key=lambda (k, v): (v,k), reverse=True)[1][0]
+
+test_classifier(tune_clfs['classifier'][clf_name], my_dataset, features_list, 1000)
+
 
 clf = tune_clfs['tuned_params'][max_classifier_key]
 
