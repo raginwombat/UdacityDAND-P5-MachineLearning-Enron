@@ -11,10 +11,10 @@ from sklearn.cross_validation  import train_test_split
 from sklearn.linear_model import LinearRegression
 import numpy as np
 import operator
+from time import time
 from collections import OrderedDict
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
-from time import time
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.grid_search import GridSearchCV
@@ -22,17 +22,10 @@ from sklearn.svm import LinearSVC
 from sklearn import preprocessing
 from data_eda import edaPreWork
 from helper import *
-
-from sklearn.feature_selection import SelectKBest 
+from sklearn.feature_selection import SelectKBest, f_classif 
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import make_scorer
 from sklearn.linear_model import LogisticRegression
-#from sklearn.metrics.precision_score import precision
-#from sklearn.metrics.recall_score import recall
-
-#feature seelction
-from sklearn.feature_selection import SelectKBest
-from sklearn.feature_selection import f_classif
 from sklearn.cross_validation  import StratifiedShuffleSplit
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
@@ -44,8 +37,6 @@ from sklearn.metrics import precision_recall_fscore_support, accuracy_score, pre
 ### Task 1: Select what features you'll use.
 ### features_list is a list of strings, each of which is a feature name.
 ### The first feature must be "poi".
-#features_list = ['poi', 'salary', 'total_payments', 'bonus',  'from_poi_frac', 'to_poi_frac',	'exercised_stock_options', 'long_term_incentive' ] # You will need to use more features
-#features_list = ['poi', 'salary', 'bonus',   'from_poi_frac', 'to_poi_frac', 'long_term_incentive' ]
 features_list = ['salary', 'to_messages', 'deferral_payments', 'total_payments', 'exercised_stock_options', 
 					'bonus', 'restricted_stock', 'shared_receipt_with_poi', 'restricted_stock_deferred', 
 					'total_stock_value', 'expenses', 'loan_advances', 'from_messages', 'other', 
@@ -94,7 +85,7 @@ data = featureFormat(my_dataset, features_list, sort_keys = True)
 labels, features = targetFeatureSplit(data)
 
 #figure out what the top k features are that match the labels
-k=17
+k=18
 skb = SelectKBest(f_classif, k=k)
 skb.fit(features, labels)
 scores = skb.scores_
@@ -171,20 +162,22 @@ features_train, features_test, labels_train, labels_test = \
 print "Hyperparameter Tuning for use in pipeline"
 
 tune_clfs = {'classifier':{}, 'result':{}, 'params':{}, 'tuned_params':{}}
+
 tune_clfs['classifier']['DecisionTreeClassifier'] = ( DecisionTreeClassifier(), \
 							{'classifier__min_samples_leaf':range(1, 20,1), 'classifier__max_depth':range(1, 20,1) })
 
-tune_clfs['classifier']['LinearSVC'] = ( LinearSVC(), \
-						{'classifier__C':range(5,20000, 100),	})
+#tune_clfs['classifier']['LinearSVC'] = ( LinearSVC(), {'classifier__C':range(5,20000, 100),	})
 
 tune_clfs['classifier']['RandomForest'] = (RandomForestClassifier(), \
 						 { 'classifier__n_estimators':range(10,400,100), 'classifier__min_samples_leaf':range(1, 5,1), 'classifier__max_depth':range(1, 5,1) })
 
-						# { 'n_estimators': range(10,400,100), 'max_features': ['sqrt', 'log2'], 'min_samples_leaf':range(1, 20,1), 'max_depth':range(1, 20,1) })
+					
+#tune_clfs['classifier']['LogisticRegression'] = (LogisticRegression(), {'classifier__tol':[.1, 10**-5, 10**-10, 10**-20], 'classifier__C': [0.05, 0.1, 0.5, 0.55, 1, 10, 10**2,10**5,10**10, 10**20] })
 
-tune_clfs['classifier']['LogisticRegression'] = (LogisticRegression(), \
-						{'classifier__tol':[10**-10, 10**-20], 'classifier__C': [0.05, 0.5, 1, 10, 10**2,10**5,10**10, 10**20] })
+tune_clfs['classifier']['Adaboost'] =( AdaBoostClassifier(n_estimators=13, learning_rate=1), \
+						{ 'n_estimators': range(100,200, 10), 'learning_rate':np.arange(.1,.3, .1)	})
 
+#tune_clfs['classifier']['KNeighborsClassifier'] = (KNeighborsClassifier(), {'classifier__n_neighbors':range(1,10,1), 'classifier__leaf_size': range(1,100,10)})
 
 
 cv = StratifiedShuffleSplit(labels, n_iter=10, test_size=0.33, random_state=42)
@@ -205,20 +198,18 @@ for clf_name in tune_clfs['classifier'].keys():
 	
 	#print "param keys:"
 	#print grid.get_params().keys()
-	print " --Fitting"
+	print " --#Fitting"
 	grid.fit(features, labels)
 	clf = grid.best_estimator_
 	pred= clf.predict(features_test)
 	score  =  precision_recall_fscore_support(labels_test, pred, average='binary')# classifierrun(clf,  features_train, features_test, labels_train, labels_test)
 	tune_clfs['result'][clf_name] = score[0] +score[1]
-	print tune_clfs['result'][clf_name]
-	#remove below
 	tune_clfs['tuned_params'][clf_name] = grid.best_params_
-	print "--Best params: ", grid.best_params_	
+	print "--#Best params: ", grid.best_params_	
 	#test_classifier(clf, my_dataset, features_list, 1000)
 	tune_clfs['classifier'][clf_name] = clf
 	
-	print " --#Precsision recall fscore"
+	print " --#Precsision recall fscore support"
 	print precision_recall_fscore_support(labels_test, pred, average='binary')
 	
 
@@ -234,12 +225,19 @@ print '#Best parms:', tune_clfs['tuned_params'][max_classifier_key]
 test_classifier(tune_clfs['classifier'][max_classifier_key], my_dataset, features_list, 1000)
 
 print "\n\n##2nd Max Classifier"
-clf_name = sorted(clfs['result'].iteritems(), key=lambda (k, v): (v,k), reverse=True)[1][0]
+clf_name = sorted(tune_clfs['result'].iteritems(), key=lambda (k, v): (v,k), reverse=True)[1][0]
 
 test_classifier(tune_clfs['classifier'][clf_name], my_dataset, features_list, 1000)
 
 
 clf = tune_clfs['tuned_params'][max_classifier_key]
+''' 
+max calssifer = Pipeline(steps=[('scale', StandardScaler(copy=True, with_mean=True, with_std=True)), \
+				('pca', PCA(copy=True, n_components=14, whiten=False)),  \
+				('classifier', LinearSVC(C=5, class_weight=None, dual=True, fit_intercept=True, \
+     				intercept_scaling=1, loss='squared_hinge', max_iter=1000, \
+     				multi_class='ovr', penalty='l2', random_state=None, tol=0.0001, \
+     				verbose=0))])
 
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
 ### check your results. You do not need to change anything below, but make sure
