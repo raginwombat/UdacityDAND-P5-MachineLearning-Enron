@@ -236,11 +236,10 @@ clf = Pipeline(steps=[('scale', StandardScaler(copy=True, with_mean=True, with_s
 
 ''' 
 max calssifer = Pipeline(steps=[('scale', StandardScaler(copy=True, with_mean=True, with_std=True)), \
-				('pca', PCA(copy=True, n_components=14, whiten=False)),  \
-				('classifier', LinearSVC(C=5, class_weight=None, dual=True, fit_intercept=True, \
-     				intercept_scaling=1, loss='squared_hinge', max_iter=1000, \
-     				multi_class='ovr', penalty='l2', random_state=None, tol=0.0001, \
-     				verbose=0))])
+				('pca', PCA(copy=True, n_components=18, whiten=False)), \
+				('classifier', RandomForestClassifier(bootstrap=True, class_weight=None, \
+					criterion='gini', max_depth=3, max_features='auto', max_leaf_nodes=None,
+          			n_jobs=4, oob_score=False, random_state=None, verbose=0, warm_start=False))])
 '''
 
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
