@@ -158,7 +158,6 @@ features_train, features_test, labels_train, labels_test = \
 	train_test_split(features, labels, test_size=0.3, random_state=42)
 
 
-#scorer=  {'precision': 'precision', 'recall': 'recall'}
 print "Hyperparameter Tuning for use in pipeline"
 
 tune_clfs = {'classifier':{}, 'result':{}, 'params':{}, 'tuned_params':{}}
@@ -175,7 +174,7 @@ tune_clfs['classifier']['RandomForest'] = (RandomForestClassifier(), \
 #tune_clfs['classifier']['LogisticRegression'] = (LogisticRegression(), {'classifier__tol':[.1, 10**-5, 10**-10, 10**-20], 'classifier__C': [0.05, 0.1, 0.5, 0.55, 1, 10, 10**2,10**5,10**10, 10**20] })
 
 tune_clfs['classifier']['Adaboost'] =( AdaBoostClassifier(n_estimators=13, learning_rate=1), \
-						{ 'n_estimators': range(100,200, 10), 'learning_rate':np.arange(.1,.3, .1)	})
+						{ 'classifier__n_estimators': range(100,200, 10), 'classifier__learning_rate':np.arange(.1,.3, .1)	})
 
 #tune_clfs['classifier']['KNeighborsClassifier'] = (KNeighborsClassifier(), {'classifier__n_neighbors':range(1,10,1), 'classifier__leaf_size': range(1,100,10)})
 
@@ -229,8 +228,12 @@ clf_name = sorted(tune_clfs['result'].iteritems(), key=lambda (k, v): (v,k), rev
 
 test_classifier(tune_clfs['classifier'][clf_name], my_dataset, features_list, 1000)
 
+clf = Pipeline(steps=[('scale', StandardScaler(copy=True, with_mean=True, with_std=True)), \
+				('pca', PCA(copy=True, n_components=18, whiten=False)), \
+				('classifier', RandomForestClassifier(bootstrap=True, class_weight=None, \
+					criterion='gini', max_depth=3, max_features='auto', max_leaf_nodes=None,
+          			n_jobs=4, oob_score=False, random_state=None, verbose=0, warm_start=False))])
 
-clf = tune_clfs['tuned_params'][max_classifier_key]
 ''' 
 max calssifer = Pipeline(steps=[('scale', StandardScaler(copy=True, with_mean=True, with_std=True)), \
 				('pca', PCA(copy=True, n_components=14, whiten=False)),  \
@@ -238,6 +241,7 @@ max calssifer = Pipeline(steps=[('scale', StandardScaler(copy=True, with_mean=Tr
      				intercept_scaling=1, loss='squared_hinge', max_iter=1000, \
      				multi_class='ovr', penalty='l2', random_state=None, tol=0.0001, \
      				verbose=0))])
+'''
 
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
 ### check your results. You do not need to change anything below, but make sure
