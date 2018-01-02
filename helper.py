@@ -9,7 +9,9 @@ from collections import defaultdict
 import numpy as np
 from time import time
 from sklearn.metrics import precision_recall_fscore_support
-
+from feature_format import featureFormat, targetFeatureSplit
+from sklearn.cross_validation  import train_test_split
+from sklearn.linear_model import LogisticRegression
 
 def printDataStats(data_dict):
 	print "Check how many people are in the dataset: ", len(data_dict)
@@ -86,6 +88,12 @@ def cleanDict(data_dict):
 					v_per[k] =0
 		if k_per == 'TOTAL':
 			del cleaned_dict['TOTAL']
+		if k_per == 'THE TRAVEL AGENCY IN THE PARK':
+			del cleaned_dict['THE TRAVEL AGENCY IN THE PARK']
+		if k_per == 'LOCKHART EUGENE E':
+			del cleaned_dict['LOCKHART EUGENE E']
+			 
+   
 	return cleaned_dict
 
 def removeOutlier(data_dict):
@@ -135,3 +143,20 @@ def classifierrun(clf, features_train, features_test, labels_train, labels_test)
 	print 'Scoring took: ', round(time()-t0, 3), 's'
 	print '(precision, recall, fbeta_score, support) : ', score
 	return score
+
+def createdFeaturesTest(clf, created_features_list, orig_features_list, dataset):
+	print "\n\nOrignal list"
+	orig_data =  featureFormat(dataset, orig_features_list, sort_keys = True)
+	orig_labels, orig_features = targetFeatureSplit(orig_data)
+	orig_features_train, orig_features_test, orig_labels_train, orig_labels_test = \
+		train_test_split(orig_features, orig_labels, test_size=0.4, random_state=42)
+
+	classifierrun(clf,orig_features_train, orig_features_test, orig_labels_train, orig_labels_test  )
+
+	print "\n\nCreated list"
+	created_data =  featureFormat(dataset, created_features_list, sort_keys = True)
+	created_labels, created_features = targetFeatureSplit(created_data)
+	created_features_train, created_features_test, created_labels_train, created_labels_test = \
+		train_test_split(created_features, created_labels, test_size=0.4, random_state=42)
+	clf = LogisticRegression()
+	classifierrun(clf,created_features_train, created_features_test, created_labels_train, created_labels_test  )

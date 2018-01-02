@@ -37,11 +37,15 @@ from sklearn.metrics import precision_recall_fscore_support, accuracy_score, pre
 ### Task 1: Select what features you'll use.
 ### features_list is a list of strings, each of which is a feature name.
 ### The first feature must be "poi".
-features_list = ['salary', 'to_messages', 'deferral_payments', 'total_payments', 'exercised_stock_options', 
+orig_features = ['salary', 'to_messages', 'deferral_payments', 'total_payments', 'exercised_stock_options', 
 					'bonus', 'restricted_stock', 'shared_receipt_with_poi', 'restricted_stock_deferred', 
 					'total_stock_value', 'expenses', 'loan_advances', 'from_messages', 'other', 
 					'from_this_person_to_poi', 'poi', 'director_fees', 'deferred_income', 'long_term_incentive', 
 					'from_poi_to_this_person']
+created_features = ['from_poi_frac', 'to_poi_frac' ]
+features_list = orig_features + created_features
+
+
 ### Load the dictionary containing the dataset
 with open("final_project_dataset.pkl", "r") as data_file:
 	data_dict = pickle.load(data_file)
@@ -76,6 +80,14 @@ for per in my_data.keys():
 
 	else:
 		my_data[per]['to_poi_frac'] = 0
+
+#test new features list 
+
+print "test created features"
+
+createdFeaturesTest(LogisticRegression(), features_list, orig_features, my_data)
+
+features_list =  orig_features
 
 ### Store to my_dataset for easy export below.
 my_dataset = my_data
@@ -236,12 +248,12 @@ print '#Best parms:', tune_clfs['tuned_params'][max_classifier_key]
 
 test_classifier(tune_clfs['classifier'][max_classifier_key], my_dataset, features_list, 1000)
 
-'''optional code to dump 2nd clasifer
+'''optional code to dump 2nd clasifer'''
 print "\n\n##2nd Max Classifier"
 clf_name = sorted(tune_clfs['result'].iteritems(), key=lambda (k, v): (v,k), reverse=True)[1][0]
 
 test_classifier(tune_clfs['classifier'][clf_name], my_dataset, features_list, 1000)
-'''
+
 
 clf = Pipeline(steps=[('scale', StandardScaler(copy=True, with_mean=True, with_std=True)), \
 				('pca', PCA(copy=True, n_components=18, whiten=False)), \
