@@ -159,22 +159,35 @@ features_train, features_test, labels_train, labels_test = \
 
 
 print "Hyperparameter Tuning for use in pipeline"
+'''
+The following  lines control the hypertuning paremters for 
+'''
+
 
 tune_clfs = {'classifier':{}, 'result':{}, 'params':{}, 'tuned_params':{}}
 
 tune_clfs['classifier']['DecisionTreeClassifier'] = ( DecisionTreeClassifier(), \
-							{'classifier__min_samples_leaf':range(1, 20,1), 'classifier__max_depth':range(1, 20,1) })
+							{'classifier__min_samples_leaf':[1,3,5], 'classifier__max_depth':[5,10,15] })
+#full DTC tuning params
+#tune_clfs['classifier']['DecisionTreeClassifier'] = ( DecisionTreeClassifier(), {'classifier__min_samples_leaf':range(1, 20,1), 'classifier__max_depth':range(1, 20,1) })
 
 #tune_clfs['classifier']['LinearSVC'] = ( LinearSVC(), {'classifier__C':range(5,20000, 100),	})
 
-tune_clfs['classifier']['RandomForest'] = (RandomForestClassifier(), \
-						 { 'classifier__n_estimators':range(10,400,100), 'classifier__min_samples_leaf':range(1, 5,1), 'classifier__max_depth':range(1, 5,1) })
+#Full Random Forest Tuning params
+#tune_clfs['classifier']['RandomForest'] = (RandomForestClassifier(), { 'classifier__n_estimators':range(10,400,100), 'classifier__min_samples_leaf':range(1, 5,1), 'classifier__max_depth':range(1, 5,1) })
 
+tune_clfs['classifier']['RandomForest'] = (RandomForestClassifier(), { 'classifier__n_estimators': [5,10,15], 'classifier__min_samples_leaf':[1,5], 'classifier__max_depth':[1,3,5]})
+
+# 'classifier__min_samples_leaf': 1, 'classifier__max_depth': 3, 'classifier__n_estimators': 10}
 					
 #tune_clfs['classifier']['LogisticRegression'] = (LogisticRegression(), {'classifier__tol':[.1, 10**-5, 10**-10, 10**-20], 'classifier__C': [0.05, 0.1, 0.5, 0.55, 1, 10, 10**2,10**5,10**10, 10**20] })
 
-tune_clfs['classifier']['Adaboost'] =( AdaBoostClassifier(n_estimators=13, learning_rate=1), \
-						{ 'classifier__n_estimators': range(100,200, 10), 'classifier__learning_rate':np.arange(.1,.3, .1)	})
+tune_clfs['classifier']['Adaboost'] =( AdaBoostClassifier(n_estimators=13, learning_rate=1), { 'classifier__n_estimators': range(100,200, 10), 'classifier__learning_rate':np.arange(.1,.3, .1)	})
+
+#Full PAdaboost param tuning
+#tune_clfs['classifier']['Adaboost'] =( AdaBoostClassifier(n_estimators=13, learning_rate=1), { 'classifier__n_estimators': range(100,200, 10), 'classifier__learning_rate':np.arange(.1,.3, .1)	})
+
+
 
 #tune_clfs['classifier']['KNeighborsClassifier'] = (KNeighborsClassifier(), {'classifier__n_neighbors':range(1,10,1), 'classifier__leaf_size': range(1,100,10)})
 

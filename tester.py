@@ -24,6 +24,7 @@ RESULTS_FORMAT_STRING = "\tTotal predictions: {:4d}\tTrue positives: {:4d}\tFals
 
 def test_classifier(clf, dataset, feature_list, folds = 1000):
 #def test_classifier(clf, features, labels, folds):
+    print clf
     
     data = featureFormat(dataset, feature_list, sort_keys = True)
     
