@@ -182,7 +182,7 @@ tune_clfs['classifier']['RandomForest'] = (RandomForestClassifier(), { 'classifi
 					
 #tune_clfs['classifier']['LogisticRegression'] = (LogisticRegression(), {'classifier__tol':[.1, 10**-5, 10**-10, 10**-20], 'classifier__C': [0.05, 0.1, 0.5, 0.55, 1, 10, 10**2,10**5,10**10, 10**20] })
 
-tune_clfs['classifier']['Adaboost'] =( AdaBoostClassifier(n_estimators=13, learning_rate=1), { 'classifier__n_estimators': range(100,200, 10), 'classifier__learning_rate':np.arange(.1,.3, .1)	})
+tune_clfs['classifier']['Adaboost'] =( AdaBoostClassifier(n_estimators=13, learning_rate=1), { 'classifier__n_estimators': [1,5,10], 'classifier__learning_rate':[.1, .2, .3]	})
 
 #Full PAdaboost param tuning
 #tune_clfs['classifier']['Adaboost'] =( AdaBoostClassifier(n_estimators=13, learning_rate=1), { 'classifier__n_estimators': range(100,200, 10), 'classifier__learning_rate':np.arange(.1,.3, .1)	})
@@ -236,10 +236,12 @@ print '#Best parms:', tune_clfs['tuned_params'][max_classifier_key]
 
 test_classifier(tune_clfs['classifier'][max_classifier_key], my_dataset, features_list, 1000)
 
+'''optional code to dump 2nd clasifer
 print "\n\n##2nd Max Classifier"
 clf_name = sorted(tune_clfs['result'].iteritems(), key=lambda (k, v): (v,k), reverse=True)[1][0]
 
 test_classifier(tune_clfs['classifier'][clf_name], my_dataset, features_list, 1000)
+'''
 
 clf = Pipeline(steps=[('scale', StandardScaler(copy=True, with_mean=True, with_std=True)), \
 				('pca', PCA(copy=True, n_components=18, whiten=False)), \
@@ -261,4 +263,3 @@ max calssifer = Pipeline(steps=[('scale', StandardScaler(copy=True, with_mean=Tr
 ### generates the necessary .pkl files for validating your results.
 
 dump_classifier_and_data(clf, my_dataset, features_list)
-
