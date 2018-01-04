@@ -139,24 +139,38 @@ def classifierrun(clf, features_train, features_test, labels_train, labels_test)
 
 	t0 = time()
 	score =precision_recall_fscore_support( labels_test, pred, average='binary' )
+	
 
 	print 'Scoring took: ', round(time()-t0, 3), 's'
 	print '(precision, recall, fbeta_score, support) : ', score
 	return score
 
 def createdFeaturesTest(clf, created_features_list, orig_features_list, dataset):
-	print "\n\nOrignal list"
+	#print 'Debug: createdFeaturesTest'
+	print '\n\nOrignal list'
 	orig_data =  featureFormat(dataset, orig_features_list, sort_keys = True)
+	#print 'Debug: oring featureFormat\n------------------\n'
 	orig_labels, orig_features = targetFeatureSplit(orig_data)
+	#print 'Debug: orig targetFeatureSplit\n------------------\n'
 	orig_features_train, orig_features_test, orig_labels_train, orig_labels_test = \
 		train_test_split(orig_features, orig_labels, test_size=0.4, random_state=42)
 
-	classifierrun(clf,orig_features_train, orig_features_test, orig_labels_train, orig_labels_test  )
+	#print 'Debug: orig train_test_split\n------------------\n'
+	#print 'Debug: createdFeaturesTest\norig_labels_test\n------------------\n'
+	
+	#print orig_labels_test
 
-	print "\n\nCreated list"
+	classifierrun(clf,orig_features_train, orig_features_test, orig_labels_train, orig_labels_test  )
+	#print 'Debug: orig classifierrun\n------------------\n'
+	#print "\n\nCreated list"
+	#print 'Debug: Created list\n------------------\n'
 	created_data =  featureFormat(dataset, created_features_list, sort_keys = True)
+	#print 'Debug: created featureFormat\n------------------\n'
 	created_labels, created_features = targetFeatureSplit(created_data)
+	#print 'Debug: created targetFeatureSplit\n------------------\n'
 	created_features_train, created_features_test, created_labels_train, created_labels_test = \
 		train_test_split(created_features, created_labels, test_size=0.4, random_state=42)
+	#print 'Debug: created train_test_split\n------------------\n'
 	clf = LogisticRegression()
 	classifierrun(clf,created_features_train, created_features_test, created_labels_train, created_labels_test  )
+	#print 'Debug: created classifierrun\n------------------\n'

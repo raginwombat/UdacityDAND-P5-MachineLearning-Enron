@@ -31,7 +31,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score, precision_score, recall_score
 
-#Un comment beofre grading
+#Un comment to generate pre-work
 #edaPreWork()
 
 ### Task 1: Select what features you'll use.
@@ -55,7 +55,7 @@ with open("final_project_dataset.pkl", "r") as data_file:
 	
 
 ### Task 2: Remove outliers
-#plot outliers
+
 
 #build data dict
 
@@ -85,7 +85,7 @@ for per in my_data.keys():
 
 print "test created features"
 
-createdFeaturesTest(LogisticRegression(), features_list, orig_features, my_data)
+#createdFeaturesTest(LogisticRegression(), features_list, orig_features, my_data)
 
 features_list =  orig_features
 
